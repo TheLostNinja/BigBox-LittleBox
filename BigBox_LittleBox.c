@@ -261,9 +261,9 @@ int get_tile_el_value(short x,short y)
  if(sourceFormat==FORMAT_BMP)					return bytStr[file_size-(((tile_y*tile_size+y)*img_width)/coef+((img_width-tile_x*tile_size)/coef-x))];
  else if(sourceFormat==FORMAT_ROHGA_DECR)		return bytStr[(file_size/2)*((x%4)/2)+tile_x*16+(x%2)+y*2];
  else if(sourceFormat==FORMAT_PCE_CG)			return bytStr[16*((x%4)/2)+tile_x*32+(x%2)+y*2];
- else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(full_size==true?(x%1):((tile_x%2)*64+((tile_x%4)/2)*32))+(targetFormat==TARGET_NEOGEO_SPR?(x/2)*2:x)+((y*4)<<full_size)];
+ else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(full_size==true?(x%2):(((targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2)*64+(((targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%4)/2)*32))+(targetFormat==TARGET_NEOGEO_SPR?(x/2)*2:x)+((y*4)<<full_size)];
  else if(sourceFormat==FORMAT_OLD_SPRITE)		return bytStr[(tile_x/16)*1024+(tile_x%4)*8+((tile_x%16)/4)*256+(x/4)*4+x/2+y*32];
- else if(sourceFormat==FORMAT_TAITO_Z)			return bytStr[(tile_x/2)*64+(ref==true?1-(tile_x%2):tile_x%2)+(3-x)*2+y*8];
+ else if(sourceFormat==FORMAT_TAITO_Z)			return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/2)*64+(ref==true?1-((targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2):(targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2)+(3-x)*2+y*8];
  else if(sourceFormat==FORMAT_UNDERFIRE)		return bytStr[(tile_x/4)*160+(1-(tile_x%2))*5+((tile_x%4)/2)*80+x+y*10];
  else if(sourceFormat==FORMAT_HALF_DEPTH)		return bytStr[((tile_x%(file_size/tile_size*tile_depth/2))/4)*256+(tile_x%2)*8+((tile_x%4)/2)*128+x+y*16];
 
@@ -450,9 +450,9 @@ int main(int argc,char *argv[])
  fread(bytStr,1,file_size,source_file);
 
  //Process based on target format
- if(full_size==true&&!(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_TC0180VCU))
+ if(full_size==true&&!(sourceFormat==FORMAT_PLANAR4_16X16||targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_TC0180VCU))
  {
-  printf("Selected target format has only one variation of size.\n");
+  printf("Selected source or target format has only one variation of size.\n");
   fclose(source_file);
   exit(1);
  }
@@ -479,7 +479,7 @@ int main(int argc,char *argv[])
  long	tiles_x;
  short	tiles_y;
 
- if((targetFormat==TARGET_MODEL3_8&&!(sourceFormat<=FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG||sourceFormat==FORMAT_PLANAR4_16X16||sourceFormat==FORMAT_SPRITE_OLD||sourceFormat==FORMAT_TAITO_Z||sourceFormat==FORMAT_UNDERFIRE||sourceFormat==FORMAT_HALF_DEPTH))
+ if((targetFormat==TARGET_MODEL3_8&&!(sourceFormat<=FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG||(sourceFormat==FORMAT_PLANAR4_16X16&&full_size==false)||sourceFormat==FORMAT_SPRITE_OLD||sourceFormat==FORMAT_TAITO_Z||sourceFormat==FORMAT_UNDERFIRE||sourceFormat==FORMAT_HALF_DEPTH))
 	 ||(targetFormat==TARGET_NEOGEO_SPR&&!(sourceFormat==FORMAT_TAITO_Z||sourceFormat==FORMAT_PLANAR4_16x16))
 	 ||!(targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_MODEL3_8)&&sourceFormat>=FORMAT_ROHGA_DECR)
  {
