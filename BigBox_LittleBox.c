@@ -501,7 +501,7 @@ int main(int argc,char *argv[])
   else if(sourceFormat==FORMAT_UNDERFIRE)	tile_depth=5;
   else										tile_depth=4;
   tiles_x=file_size/tile_size*tile_depth;
-  tiles_y=1;
+  tiles_y=1; //Because a tile data, unlike the standart GFX files, hasn't a size parameters by themselves, it'd be a more expedient to present all the data piece as a very-very long tiles row
  }
 
  //Process tiles
