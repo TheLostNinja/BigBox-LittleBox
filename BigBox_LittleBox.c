@@ -366,7 +366,7 @@ int main(int argc,char *argv[])
  file_size=ftell(source_file);
 
  char* dot_pos=strrchr(filename,'.');
- char tilename[256];
+ char tilename1[256];
  char tmap_name[256];
  char palname[256];
  if(dot_pos!=NULL)
@@ -375,18 +375,23 @@ int main(int argc,char *argv[])
   char extless[name_lenght+1];
   strncpy(extless,filename,name_lenght);
   extless[name_lenght]='\0';
-  snprintf(tilename,sizeof(tilename),"%s.bin",extless);
-  if(isTileMap) snprintf(tmap_name,sizeof(tmap_name),"%s_tilemap.bin",extless);
-  if(sourceFormat==FORMAT_BMP) snprintf(palname,sizeof(palname),"%s_pal.bin",extless);
+  if(targetFormat==TARGET_NEOGEO_SPR)
+  {
+   snprintf(tilename1,sizeof(tilename1),"%s.c1",extless);
+   snprintf(tilename2,sizeof(tilename2),"%s.c2",extless);
+  }
+  else							snprintf(tilename1,sizeof(tilename2),"%s.bin",extless);
+  if(isTileMap)					snprintf(tmap_name,sizeof(tmap_name),"%s_tilemap.bin",extless);
+  if(sourceFormat==FORMAT_BMP)	snprintf(palname,sizeof(palname),"%s_pal.bin",extless);
  }
  else
  {
   if(targetFormat==TARGET_NEOGEO_SPR)
   {
-   snprintf(tilename1,sizeof(tilename),"%s.c1",filename);
-   snprintf(tilename2,sizeof(tilename),"%s.c2",filename);
+   snprintf(tilename1,sizeof(tilename1),"%s.c1",filename);
+   snprintf(tilename2,sizeof(tilename2),"%s.c2",filename);
   }
-  else							snprintf(tilename1,sizeof(tilename),"%s.bin",filename);
+  else							snprintf(tilename1,sizeof(tilename1),"%s.bin",filename);
 
   if(isTileMap)					snprintf(tmap_name,sizeof(tmap_name),"%s_tilemap.bin",filename);
   if(sourceFormat==FORMAT_BMP)	snprintf(palname,sizeof(palname),"%s_pal.bin",filename);
