@@ -70,7 +70,7 @@ const struct TargetInfo target_formats[] = {
     {"c123", "8bpp linear 8x8 tiles for Namco C123 (identical to GBA and SNES Mode7 tiles)"},
     {"old_sprite", "8bpp planar 32x32 tiles for early Namco System 2 versions sprite subsystem. Besides the full hardware tile space, converter user can also occupy its upper left quarter only (see the -full arg), which can be helpful for a smaller sprites usage in the homebrew games and hacks for NS2."},
     {"model3_8", "8bpp linear 8x8 tiles for Sega Model 3 tilemaps"},
-    {"neogeo_spr", "4bpp planar 16x16 sprites for Neo-Geo MVS\AES"},
+    {"neogeo_spr", "4bpp planar 16x16 sprites for Neo-Geo MVS\\AES"},
     {"psikyo_later_generations_8", "8bpp linear 16x16 tiles for Psikyo's SH-2 based arcade machines"},
     {"atetris", "4bpp linear 8x8 tiles for Atari's Tetris arcade hardware (identical to Sega Genesis/Mega Drive and MSX tiles)"},
     {"tc0180vcu", "4bpp planar 8x8 tiles for Taito TC0180VCU custom video chip, used mainly by Taito System B arcade platform. Generated palette data is 12-bit RGBx."},
@@ -367,6 +367,7 @@ int main(int argc,char *argv[])
 
  char* dot_pos=strrchr(filename,'.');
  char tilename1[256];
+ char tilename2[256];
  char tmap_name[256];
  char palname[256];
  if(dot_pos!=NULL)
@@ -381,6 +382,7 @@ int main(int argc,char *argv[])
    snprintf(tilename2,sizeof(tilename2),"%s.c2",extless);
   }
   else							snprintf(tilename1,sizeof(tilename2),"%s.bin",extless);
+
   if(isTileMap)					snprintf(tmap_name,sizeof(tmap_name),"%s_tilemap.bin",extless);
   if(sourceFormat==FORMAT_BMP)	snprintf(palname,sizeof(palname),"%s_pal.bin",extless);
  }
@@ -506,7 +508,7 @@ int main(int argc,char *argv[])
  }
  else
  {
-  if((targetFormat!=FORMAT_MODEL3_8)
+  if((targetFormat!=TARGET_MODEL3_8)
   {
    printf("This source and target formats combination doesn't supported!\n");
    fclose(source_file);
@@ -597,8 +599,8 @@ int main(int argc,char *argv[])
 
 		 if(full_size==true&&x==tile_size/coef/2)
 		 {
-		  fputc(pix0,tilefile);
-		  fputc(pix1,tilefile);
+		  fputc(pix0,tilefile1);
+		  fputc(pix1,tilefile1);
 		  pix0=pix1=0;
          }
         }
@@ -687,7 +689,7 @@ int main(int argc,char *argv[])
 
  fclose(source_file);
  fclose(tilefile1);
- if(targetFormat==FORMAT_NEOGEO_SPR)	fclose(tilefile2);
+ if(targetFormat==TARGET_NEOGEO_SPR)	fclose(tilefile2);
  if(isTileMap)							fclose(tilemapfile);
  if(palfile)							fclose(palfile);
 }
