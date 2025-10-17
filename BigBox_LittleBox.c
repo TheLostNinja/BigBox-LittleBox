@@ -58,7 +58,8 @@ const struct FormatInfo source_formats[] = {
     {"bmp", "standard BMP file"},
     {"rohga_decr", "decrypted 4bpp planar 8x8 tiles for Armored Force Rohga"},
     {"pce_cg", "4bpp planar 8x8 tiles for NEC/Hudson Soft PC Engine/TurboGraphX-16 basic video"},
-    {"planar4_16x16", "Generic 4bpp planar 16x16 tiles. The most noticeable usage cases is a sprites for most Irem M92 games and tiles for Konami K053246 custom sprite chip."},
+    //{"linear4_16x16", "Generic 4bpp linear 16x16 tiles. Among the noticeable usage cases is a tiles for Konami K053246 custom sprite chip."},
+    {"planar4_16x16", "Generic 4bpp planar 16x16 tiles. Among the noticeable usage cases is a sprites for most Irem M92 games and tiles for Taito TC0180VCU and Toaplan GP9001 custom video chips."},
     {"old_sprite", "See the target formats list. Please note that in the source role its size is always gets used fully."},
     {"taito_z", "4bpp planar 16x8 sprite tiles for Taito System Z games (except Chase HQ). Some of them (e.g., Battle Shark and Space Gun) use a pre-mirrored tiles (see the -ref arg)."},
     {"underfire", "5bpp planar 16x16 sprite tiles for Taito's Under Fire hardware"},
@@ -73,7 +74,7 @@ const struct TargetInfo target_formats[] = {
     {"neogeo_spr", "4bpp planar 16x16 sprites for Neo-Geo MVS\\AES"},
     {"psikyo_later_generations_8", "8bpp linear 16x16 tiles for Psikyo's SH-2 based arcade machines"},
     {"atetris", "4bpp linear 8x8 tiles for Atari's Tetris arcade hardware (identical to Sega Genesis/Mega Drive and MSX tiles)"},
-    {"tc0180vcu", "4bpp planar 8x8 tiles for Taito TC0180VCU custom video chip, used mainly by Taito System B arcade platform. Generated palette data is 12-bit RGBx."},
+    {"tc0180vcu", "4bpp planar tiles for Taito TC0180VCU custom video chip, used mainly by Taito System B arcade platform. Can be output both in 8x8 and 16x16 (using a -full arg) form. Generated palette data is 12-bit RGBx."},
     {NULL, NULL}
 };
 
@@ -260,7 +261,7 @@ int get_tile_el_value(short x,short y)
  if(sourceFormat==FORMAT_BMP)					return bytStr[file_size-(((tile_y*tile_size+y)*img_width)/coef+((img_width-tile_x*tile_size)/coef-x))];
  else if(sourceFormat==FORMAT_ROHGA_DECR)		return bytStr[(file_size/2)*((x%4)/2)+tile_x*16+(x%2)+y*2];
  else if(sourceFormat==FORMAT_PCE_CG)			return bytStr[16*((x%4)/2)+tile_x*32+(x%2)+y*2];
- else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(tile_x/4)*128+(tile_x%2)*64+((tile_x%4)/2)*32+x+y*4];
+ else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(full_size==true?(x%1):((tile_x%2)*64+((tile_x%4)/2)*32))+(targetFormat==TARGET_NEOGEO_SPR?(x/2)*2:x)+((y*4)<<full_size)];
  else if(sourceFormat==FORMAT_OLD_SPRITE)		return bytStr[(tile_x/16)*1024+(tile_x%4)*8+((tile_x%16)/4)*256+(x/4)*4+x/2+y*32];
  else if(sourceFormat==FORMAT_TAITO_Z)			return bytStr[(tile_x/2)*64+(ref==true?1-(tile_x%2):tile_x%2)+(3-x)*2+y*8];
  else if(sourceFormat==FORMAT_UNDERFIRE)		return bytStr[(tile_x/4)*160+(1-(tile_x%2))*5+((tile_x%4)/2)*80+x+y*10];
