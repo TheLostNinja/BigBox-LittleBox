@@ -66,17 +66,16 @@ const struct FormatInfo source_formats[] = {
 };
 
 const struct TargetInfo target_formats[] = {
-    {"c123", "8bpp linear 8x8 tiles for Namco C123 (identical to GBA and SNES Mode7 8bpp)"},
+    {"c123", "8bpp linear 8x8 tiles for Namco C123 (identical to GBA and SNES Mode7 tiles)"},
     {"old_sprite", "8bpp planar 32x32 tiles for early Namco System 2 versions sprite subsystem. Besides the full hardware tile space, converter user can also occupy its upper left quarter only (see the -full arg), which can be helpful for a smaller sprites usage in the homebrew games and hacks for NS2."},
     {"model3_8", "8bpp linear 8x8 tiles for Sega Model 3 tilemaps"},
     {"psikyo_later_generations_8", "8bpp linear 16x16 tiles for Psikyo's SH-2 based arcade machines"},
+    {"atetris", "4bpp linear 8x8 tiles for Atari's Tetris arcade hardware (identical to Sega Genesis/Mega Drive and MSX tiles)"},
     {"tc0180vcu", "4bpp planar 8x8 tiles for Taito TC0180VCU custom video chip, used mainly by Taito System B arcade platform. Generated palette data is 12-bit RGBx."},
     {NULL, NULL}
 };
 
 const struct ArgsInfo additional_args[] = {
-    {"in", "prefaces an input file format (looks like that: -in <source_format>)"},
-    {"out", "prefaces an output tile data file format (looks like that: -out <target_format>)"},
     {"tm", "generate tilemap (only for BMP images and non-8x8 tile formats)"},
     {"full", "use a larger version of some tile formats (only for old_sprite and tc0180vcu)"},
     {"ref", "Reflect an input or output (depends on the source and target formats combination) tiles. This feature is used by taito_z (horizontal) and tc0180vcu (vertical) only."},
@@ -114,8 +113,8 @@ void print_help(const char* program_name)
 {
  int i;
 
- printf("Bitmap converter to tile data.\n");
- printf("Usage: %s [options] <srcfile>\n\n",program_name);
+ printf("Multi-format tile data conversion tool.\n");
+ printf("Usage: %s <srcfile> -in [source_format] -out [target_format] [options]\n\n",program_name);
  printf("Options:\n");
 
  for(i=0;additional_args[i].name!=NULL;i++) printf("  -%-29s %s\n",additional_args[i].name,additional_args[i].description);
@@ -484,6 +483,13 @@ int main(int argc,char *argv[])
  }
  else
  {
+  if((targetFormat!=FORMAT_MODEL3_8)
+  {
+   printf("This source and target formats combination doesn't supported!\n");
+   fclose(source_file);
+   exit(1);
+  }
+
   if((sourceFormat==FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG)&&isTileMap==true)
   {
    printf("8x8 tiles formats doesn't need an extra optimization.\n");
