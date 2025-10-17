@@ -642,7 +642,12 @@ int main(int argc,char *argv[])
 	  {
        for(z=0;z<tile_depth;z++)
        {
-        for(x=0;x<tile_size;x++) pix1=((pix1&(1<<((15-x)%8)))>>(((15-x)%8)))<<z;
+        for(x=0;x<tile_size;x++)	pix0|=(((get_tile_el_value((x/8)*4+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<(x%8);
+
+	   	if(z/2==0)					fputc(pix0,tilefile1);
+		else						fputc(pix0,tilefile2);
+
+		pix0=0;
 	   }
 	  }
       else
@@ -668,11 +673,7 @@ int main(int argc,char *argv[])
 
 		  pix1=(((pix1&(1<<(z%4)))>>(z%4))<<(7-z));
          }
-		 else
-		 {
-          if(targetFormat==TARGET_MODEL3_8)	pix1=((pix1&(1<<(((7-x)/4)*4+(x%4))))>>(((7-x)/4)*4+(x%4)))<<z;
-          else								
-		 }
+		 else	pix1=((pix1&(1<<(((7-x)/4)*4+(x%4))))>>(((7-x)/4)*4+(x%4)))<<z;
 		}
 		pix0|=pix1;
 	   }
