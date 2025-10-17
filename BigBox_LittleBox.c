@@ -57,7 +57,7 @@ const struct FormatInfo source_formats[] = {
     {"bmp", "standard BMP file"},
     {"rohga_decr", "decrypted 4bpp planar 8x8 tiles for Armored Force Rohga"},
     {"pce_cg", "4bpp planar 8x8 tiles for NEC/Hudson Soft PC Engine/TurboGraphX-16 basic video"},
-    {"planar4_16x16", "generic 4bpp planar 16x16 tiles"},
+    {"planar4_16x16", "Generic 4bpp planar 16x16 tiles. The most noticeable usage cases is a sprites for most Irem M92 games and tiles for Konami K053246 custom sprite chip."},
     {"old_sprite", "See the target formats list. Please note that in the source role its size is always gets used fully."},
     {"taito_z", "4bpp planar 16x8 sprite tiles for Taito System Z games (except Chase HQ). Some of them (e.g., Battle Shark) use a pre-mirrored tiles (see the -ref arg)."},
     {"underfire", "5bpp planar 16x16 sprite tiles for Taito's Under Fire hardware"},
