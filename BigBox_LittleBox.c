@@ -508,7 +508,7 @@ int main(int argc,char *argv[])
  }
  else
  {
-  if((targetFormat!=TARGET_MODEL3_8)
+  if(targetFormat!=TARGET_MODEL3_8)
   {
    printf("This source and target formats combination doesn't supported!\n");
    fclose(source_file);
@@ -604,8 +604,8 @@ int main(int argc,char *argv[])
 		  pix0=pix1=0;
          }
         }
-	   	fputc(pix0,tilefile);
-	   	fputc(pix1,tilefile);
+	   	fputc(pix0,tilefile1);
+	   	fputc(pix1,tilefile1);
 	   	pix0=pix1=0;
        }
       }
