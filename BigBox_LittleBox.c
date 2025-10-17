@@ -478,6 +478,15 @@ int main(int argc,char *argv[])
  long	tiles_x;
  short	tiles_y;
 
+ if((targetFormat==TARGET_MODEL3_8&&!(sourceFormat<=FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG||sourceFormat==FORMAT_PLANAR4_16X16||sourceFormat==FORMAT_SPRITE_OLD||sourceFormat==FORMAT_TAITO_Z||sourceFormat==FORMAT_UNDERFIRE||sourceFormat==FORMAT_HALF_DEPTH))
+	 ||(targetFormat==TARGET_NEOGEO_SPR&&!(sourceFormat==FORMAT_TAITO_Z||sourceFormat==FORMAT_PLANAR4_16x16))
+	 ||!(targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_MODEL3_8)&&sourceFormat>=FORMAT_ROHGA_DECR)
+ {
+  printf("This source and target formats combination doesn't supported!\n");
+  fclose(source_file);
+  exit(1);
+ }
+
  if(isTileMap&&(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_NEOGEO_SPR))
  {
   printf("Chosen target format is a sprites, not a tilemaps.\n");
@@ -508,13 +517,6 @@ int main(int argc,char *argv[])
  }
  else
  {
-  if(targetFormat!=TARGET_MODEL3_8)
-  {
-   printf("This source and target formats combination doesn't supported!\n");
-   fclose(source_file);
-   exit(1);
-  }
-
   if((sourceFormat==FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG)&&isTileMap==true)
   {
    printf("8x8 tiles formats doesn't need an extra optimization.\n");
