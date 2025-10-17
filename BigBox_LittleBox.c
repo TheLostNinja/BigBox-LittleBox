@@ -5,7 +5,7 @@ char*			filename;
 unsigned char*	bytStr;
 enum 			SourceFormat sourceFormat;
 enum 			TargetFormat targetFormat;
-FILE			*source_file, *tilefile, *tilemapfile, *palfile;
+FILE			*source_file, *tilefile1, *tilefile2, *tilemapfile, *palfile;
 long			file_size,tx,tile_x;
 int				colNum,pix_loc,img_width,img_height,ty,tile_y;
 short			pal_loc,img_depth,tile_depth,tile_size,coef,pix0,pix1;
@@ -29,6 +29,7 @@ enum TargetFormat
  TARGET_C123,
  TARGET_OLD_SPRITE,
  TARGET_MODEL3_8,
+ TARGET_NEOGEO_SPR,
  TARGET_PSIKYO_LATER_GENERATIONS_8,
  TARGET_ATETRIS,
  TARGET_TC0180VCU,
@@ -59,7 +60,7 @@ const struct FormatInfo source_formats[] = {
     {"pce_cg", "4bpp planar 8x8 tiles for NEC/Hudson Soft PC Engine/TurboGraphX-16 basic video"},
     {"planar4_16x16", "Generic 4bpp planar 16x16 tiles. The most noticeable usage cases is a sprites for most Irem M92 games and tiles for Konami K053246 custom sprite chip."},
     {"old_sprite", "See the target formats list. Please note that in the source role its size is always gets used fully."},
-    {"taito_z", "4bpp planar 16x8 sprite tiles for Taito System Z games (except Chase HQ). Some of them (e.g., Battle Shark, Space Gun) use a pre-mirrored tiles (see the -ref arg)."},
+    {"taito_z", "4bpp planar 16x8 sprite tiles for Taito System Z games (except Chase HQ). Some of them (e.g., Battle Shark and Space Gun) use a pre-mirrored tiles (see the -ref arg)."},
     {"underfire", "5bpp planar 16x16 sprite tiles for Taito's Under Fire hardware"},
     {"half_depth", "tricky technique of generic 4bpp linear 16x16 sprite tiles enpackagement as a sprite data for Namco C355"},
     {NULL, NULL}
@@ -69,6 +70,7 @@ const struct TargetInfo target_formats[] = {
     {"c123", "8bpp linear 8x8 tiles for Namco C123 (identical to GBA and SNES Mode7 tiles)"},
     {"old_sprite", "8bpp planar 32x32 tiles for early Namco System 2 versions sprite subsystem. Besides the full hardware tile space, converter user can also occupy its upper left quarter only (see the -full arg), which can be helpful for a smaller sprites usage in the homebrew games and hacks for NS2."},
     {"model3_8", "8bpp linear 8x8 tiles for Sega Model 3 tilemaps"},
+    {"neogeo_spr", "4bpp planar 16x16 sprites for Neo-Geo MVS\AES"},
     {"psikyo_later_generations_8", "8bpp linear 16x16 tiles for Psikyo's SH-2 based arcade machines"},
     {"atetris", "4bpp linear 8x8 tiles for Atari's Tetris arcade hardware (identical to Sega Genesis/Mega Drive and MSX tiles)"},
     {"tc0180vcu", "4bpp planar 8x8 tiles for Taito TC0180VCU custom video chip, used mainly by Taito System B arcade platform. Generated palette data is 12-bit RGBx."},
@@ -379,16 +381,32 @@ int main(int argc,char *argv[])
  }
  else
  {
-  snprintf(tilename,sizeof(tilename),"%s.bin",filename);
-  if(isTileMap) snprintf(tmap_name,sizeof(tmap_name),"%s_tilemap.bin",filename);
-  if(sourceFormat==FORMAT_BMP) snprintf(palname,sizeof(palname),"%s_pal.bin",filename);
+  if(targetFormat==TARGET_NEOGEO_SPR)
+  {
+   snprintf(tilename1,sizeof(tilename),"%s.c1",filename);
+   snprintf(tilename2,sizeof(tilename),"%s.c2",filename);
+  }
+  else							snprintf(tilename1,sizeof(tilename),"%s.bin",filename);
+
+  if(isTileMap)					snprintf(tmap_name,sizeof(tmap_name),"%s_tilemap.bin",filename);
+  if(sourceFormat==FORMAT_BMP)	snprintf(palname,sizeof(palname),"%s_pal.bin",filename);
  }
 
- if((tilefile=fopen(tilename,"wb"))==NULL)
+ if((tilefile1=fopen(tilename1,"wb"))==NULL)
  {
   printf("Can't open output file\n");
   fclose(source_file);
   return 1;
+ }
+
+ if(targetFormat==TARGET_NEOGEO_SPR)
+ {
+  if((tilefile2=fopen(tilename2,"wb"))==NULL)
+  {
+   printf("Can't open output file\n");
+   fclose(source_file);
+   return 1;
+  }
  }
 
  if(isTileMap)
@@ -453,15 +471,15 @@ int main(int argc,char *argv[])
  long	tiles_x;
  short	tiles_y;
 
+ if(isTileMap&&(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_NEOGEO_SPR))
+ {
+  printf("Chosen target format is a sprites, not a tilemaps.\n");
+  fclose(source_file);
+  exit(1);
+ }
+
  if(sourceFormat<FORMAT_ROHGA_DECR)
  {
-  if(isTileMap&&targetFormat==TARGET_OLD_SPRITE)
-  {
-   printf("Chosen target format is a sprites, not a tilemaps.\n");
-   fclose(source_file);
-   exit(1);
-  }
-
   check_format();
 
   if(img_depth>8)
@@ -663,7 +681,8 @@ int main(int argc,char *argv[])
  }
 
  fclose(source_file);
- fclose(tilefile);
- if(isTileMap)fclose(tilemapfile);
- if(palfile)fclose(palfile);
+ fclose(tilefile1);
+ if(targetFormat==FORMAT_NEOGEO_SPR)	fclose(tilefile2);
+ if(isTileMap)							fclose(tilemapfile);
+ if(palfile)							fclose(palfile);
 }
