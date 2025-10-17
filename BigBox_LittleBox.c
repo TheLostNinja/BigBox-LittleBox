@@ -654,7 +654,7 @@ int main(int argc,char *argv[])
 		}
 		pix0|=pix1;
 	   }
-	   fputc(pix0,tilefile);
+	   fputc(pix0,tilefile1);
 	   pix0=0;
 	  }
 	 }
