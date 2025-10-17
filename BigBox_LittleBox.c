@@ -17,6 +17,7 @@ enum SourceFormat
  FORMAT_ROHGA_DECR,
  FORMAT_PCE_CG,
  FORMAT_PLANAR4_16x16,
+ FORMAT_NEO_MIRROR,
  FORMAT_OLD_SPRITE,
  FORMAT_TAITO_Z,
  FORMAT_UNDERFIRE,
@@ -60,6 +61,7 @@ const struct FormatInfo source_formats[] = {
     {"pce_cg", "4bpp planar 8x8 tiles for NEC/Hudson Soft PC Engine/TurboGraphX-16 basic video"},
     //{"linear4_16x16", "Generic 4bpp linear 16x16 tiles. Among the noticeable usage cases is a tiles for Konami K053246 custom sprite chip."},
     {"planar4_16x16", "Generic 4bpp planar 16x16 tiles. Among the noticeable usage cases is a sprites for Irem M92 and tiles for Taito TC0180VCU and Toaplan GP9001 custom video chips. Some later M92 games (e. g. [Superior/Perfect] Soldiers) stores the sprite data by 16px-wide rows instead of 8px-wide like other - in this case you can use the -full arg."},
+    {"neo_mirror", "The closest to Neo-Geo sprites graphic format, excepting only reverse order of pixels inside each 8px-wide row. The most noticeable usage case is a sprites for some of Data East 16-bit arcades (for example, Crude Buster/Two Crude) and their various korean hardware clones."},
     {"old_sprite", "See the target formats list. Please note that in the source role its size is always gets used fully."},
     {"taito_z", "4bpp planar 16x8 sprite tiles for Taito System Z games (except Chase HQ). Some of them (e.g., Battle Shark and Space Gun) use a pre-mirrored tiles (see the -ref arg)."},
     {"underfire", "5bpp planar 16x16 sprite tiles for Taito's Under Fire hardware"},
@@ -92,6 +94,7 @@ enum SourceFormat GetSourceFormat(const char* arg)
  if(strcmp(arg,"rohga_decr")==0)					return FORMAT_ROHGA_DECR;
  if(strcmp(arg,"pce_cg")==0)						return FORMAT_PCE_CG;
  if(strcmp(arg,"planar4_16x16")==0)					return FORMAT_PLANAR4_16x16;
+ if(strcmp(arg,"neo_mirror")==0)					return FORMAT_NEO_MIRROR;
  if(strcmp(arg,"old_sprite")==0)					return FORMAT_OLD_SPRITE;
  if(strcmp(arg,"taito_z")==0)						return FORMAT_TAITO_Z;
  if(strcmp(arg,"underfire")==0)						return FORMAT_UNDERFIRE;
@@ -105,6 +108,7 @@ enum TargetFormat GetTargetFormat(const char* arg)
  if(strcmp(arg,"c123")==0)							return TARGET_C123;
  if(strcmp(arg,"old_sprite")==0)					return TARGET_OLD_SPRITE;
  if(strcmp(arg,"model3_8")==0)						return TARGET_MODEL3_8;
+ if(strcmp(arg,"neogeo_spr")==0)					return TARGET_NEOGEO_SPR;
  if(strcmp(arg,"psikyo_later_generations_8")==0)	return TARGET_PSIKYO_LATER_GENERATIONS_8;
  if(strcmp(arg,"atetris")==0)						return TARGET_ATETRIS;
  if(strcmp(arg,"tc0180vcu")==0)						return TARGET_TC0180VCU;
@@ -262,6 +266,7 @@ int get_tile_el_value(short x,short y)
  else if(sourceFormat==FORMAT_ROHGA_DECR)		return bytStr[(file_size/2)*((x%4)/2)+tile_x*16+(x%2)+y*2];
  else if(sourceFormat==FORMAT_PCE_CG)			return bytStr[16*((x%4)/2)+tile_x*32+(x%2)+y*2];
  else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(full_size==true?(x%2):(((targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2)*64+(((targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%4)/2)*32))+(targetFormat==TARGET_NEOGEO_SPR?(x/2)*2:x)+((y*4)<<full_size)];
+ else if(sourceFormat==FORMAT_NEO_MIRROR)		return bytStr[tile_x*128+(x%2)*64+x+(y*4)];
  else if(sourceFormat==FORMAT_OLD_SPRITE)		return bytStr[(tile_x/16)*1024+(tile_x%4)*8+((tile_x%16)/4)*256+(x/4)*4+x/2+y*32];
  else if(sourceFormat==FORMAT_TAITO_Z)			return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/2)*64+(ref==true?1-((targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2):(targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2)+(3-x)*2+y*8];
  else if(sourceFormat==FORMAT_UNDERFIRE)		return bytStr[(tile_x/4)*160+(1-(tile_x%2))*5+((tile_x%4)/2)*80+x+y*10];
@@ -467,20 +472,20 @@ int main(int argc,char *argv[])
  short depth;
 
  //Get target format tile size
- if(targetFormat==TARGET_OLD_SPRITE)						tile_size=16<<full_size;
- else if(targetFormat==TARGET_PSIKYO_LATER_GENERATIONS_8)	tile_size=16;
- else if(targetFormat==TARGET_TC0180VCU)					tile_size=8<<full_size;
- else														tile_size=8;
+ if(targetFormat==TARGET_OLD_SPRITE)															tile_size=16<<full_size;
+ else if(targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_PSIKYO_LATER_GENERATIONS_8)		tile_size=16;
+ else if(targetFormat==TARGET_TC0180VCU)														tile_size=8<<full_size;
+ else																							tile_size=8;
 
  //Then depth
- if(targetFormat>TARGET_PSIKYO_LATER_GENERATIONS_8)			depth=4;
- else														depth=8;
+ if(targetFormat==TARGET_NEOGEO_SPR||targetFormat>TARGET_PSIKYO_LATER_GENERATIONS_8)			depth=4;
+ else																							depth=8;
 
  long	tiles_x;
  short	tiles_y;
 
  if((targetFormat==TARGET_MODEL3_8&&!(sourceFormat<=FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG||(sourceFormat==FORMAT_PLANAR4_16X16&&full_size==false)||sourceFormat==FORMAT_SPRITE_OLD||sourceFormat==FORMAT_TAITO_Z||sourceFormat==FORMAT_UNDERFIRE||sourceFormat==FORMAT_HALF_DEPTH))
-	 ||(targetFormat==TARGET_NEOGEO_SPR&&!(sourceFormat==FORMAT_TAITO_Z||sourceFormat==FORMAT_PLANAR4_16x16))
+	 ||(targetFormat==TARGET_NEOGEO_SPR&&!(sourceFormat==FORMAT_PLANAR4_16x16||sourceFormat==FORMAT_TAITO_Z))
 	 ||!(targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_MODEL3_8)&&sourceFormat>=FORMAT_ROHGA_DECR)
  {
   printf("This source and target formats combination doesn't supported!\n");
@@ -633,6 +638,16 @@ int main(int argc,char *argv[])
 	 }
 	 else
 	 {
+      if(targetFormat==TARGET_NEO_MIRROR)
+	  {
+       for(z=0;z<tile_depth;z++)
+       {
+        for(x=0;x<tile_size;x++) pix1=((pix1&(1<<((15-x)%8)))>>(((15-x)%8)))<<z;
+	   }
+	  }
+      else
+	  {
+	  }
   	  for(x=0;x<tile_size;x++)
   	  {
 	   if(sourceFormat==FORMAT_HALF_DEPTH)
@@ -653,7 +668,11 @@ int main(int argc,char *argv[])
 
 		  pix1=(((pix1&(1<<(z%4)))>>(z%4))<<(7-z));
          }
-		 else pix1=((pix1&(1<<(((7-x)/4)*4+(x%4))))>>(((7-x)/4)*4+(x%4)))<<z;
+		 else
+		 {
+          if(targetFormat==TARGET_MODEL3_8)	pix1=((pix1&(1<<(((7-x)/4)*4+(x%4))))>>(((7-x)/4)*4+(x%4)))<<z;
+          else								
+		 }
 		}
 		pix0|=pix1;
 	   }
@@ -677,6 +696,8 @@ int main(int argc,char *argv[])
   {
    case TARGET_MODEL3_8:
    		model3_tilemap_pal();
+		break;
+   case TARGET_NEOGEO_SPR:
 		break;
    case TARGET_ATETRIS:
    		rgb332();
