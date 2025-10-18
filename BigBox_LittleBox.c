@@ -540,7 +540,7 @@ int main(int argc,char *argv[])
  //Process tiles
  long	unique_tiles_base[tiles_x*tiles_y],tile_index,prev_tx,matched_tx,unique_tiles=0;
  int	prev_ty,matched_ty;
- short	tiles[img_width*img_height],x,y,z;
+ short	tiles[sourceFormat<FORMAT_ROHGA_DECR?img_width*img_height:tile_size*tile_size*depth/8],x,y,z;
  bool	match_found;
 
  for(ty=0;ty<tiles_y;ty++)
@@ -637,48 +637,38 @@ int main(int argc,char *argv[])
 	 }
 	 else
 	 {
-      if(targetFormat==TARGET_NEOGEO_SPR)
-	  {
+      for(x=0;x<tile_size;x++)
+      {
+       if(sourceFormat==FORMAT_HALF_DEPTH)
+       {
+        pix0=get_tile_el_value(z,y);
+        if(tx<tiles_x/2)	pix0>>4;
+        else				pix0&=0xf;
+       }
        for(z=0;z<tile_depth;z++)
        {
-        for(x=0;x<tile_size;x++)	pix0|=(((get_tile_el_value((1-(x/8))*4+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<(x%8);
+        if(targetFormat==TARGET_NEOGEO_SPR) tiles[tiles_x*128+(x/8)*64+y*16+z]|=(((get_tile_el_value((x/8)*4+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<(x%8);
+        else
+        {
+         pix1=get_tile_el_value(z,y);
+         if(sourceFormat==FORMAT_OLD_SPRITE)
+         {
+          if(z%2)	pix1>>4;
+          else		pix1&=0xf;
 
-	   	if(z/2==0)					fputc(pix0,tilefile1);
-		else						fputc(pix0,tilefile2);
+          pix1=(((pix1&(1<<(z%4)))>>(z%4))<<(7-z));
+         }
+         else	pix1=((pix1&(1<<(((7-x)/4)*4+(x%4))))>>(((7-x)/4)*4+(x%4)))<<z;
+        }
+       }
 
-		pix0=0;
+       if(targetFormat==TARGET_MODEL3_8)
+	   {
+        if(sourceFormat!=FORMAT_HALF_DEPTH)	pix0|=pix1;
+		fputc(pix0,tilefile1);
+        if(sourceFormat!=FORMAT_HALF_DEPTH)	pix0=0;
 	   }
-	  }
-      else
-	  {
-  	   for(x=0;x<tile_size;x++)
-  	   {
-	    if(sourceFormat==FORMAT_HALF_DEPTH)
-	    {
-	   	 pix0=get_tile_el_value(z,y);
-		 if(tx<tiles_x/2)	pix0>>4;
-		 else				pix0&=0xf;
-	    }
-	    else
-	    {
-	   	 for(z=0;z<tile_depth;z++)
-	   	 {
-		  pix1=get_tile_el_value(z,y);
-		  if(sourceFormat==FORMAT_OLD_SPRITE)
-		  {
-		   if(z%2)	pix1>>4;
-		   else		pix1&=0xf;
-
-		   pix1=(((pix1&(1<<(z%4)))>>(z%4))<<(7-z));
-          }
-		  else	pix1=((pix1&(1<<(((7-x)/4)*4+(x%4))))>>(((7-x)/4)*4+(x%4)))<<z;
-		 }
-		 pix0|=pix1;
-	    }
-	    fputc(pix0,tilefile1);
-	    pix0=0;
-	   }
-	  } 
+      }
 	 }
     }
    }
