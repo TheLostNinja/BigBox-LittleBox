@@ -617,7 +617,7 @@ int main(int argc,char *argv[])
 	   }
       }
 
-      if(!(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_TC0180VCU)) tiles[]
+      if(!(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_TC0180VCU)) tiles[tile_size*tile_size*depth/8+y*(tile_size*depth/8)+x]=pix0;
       else
 	  {
        if(targetFormat==TARGET_OLD_SPRITE)	tiles[(full_size==true?tile_x:tile_x/4)*128+...]=pix0;
