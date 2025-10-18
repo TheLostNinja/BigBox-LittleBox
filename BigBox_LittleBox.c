@@ -547,10 +547,9 @@ int main(int argc,char *argv[])
  {
   for(tx=0;tx<tiles_x;tx++)
   {
+   match_found=false;
    if(isTileMap)
    {
-   	match_found=false;
-
    	//Check against previous tiles for duplicates
 	for(prev_ty=0;prev_ty<=ty&&!match_found;prev_ty++)
 	{
