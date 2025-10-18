@@ -523,6 +523,8 @@ int main(int argc,char *argv[])
  }
  else
  {
+  coef=1;
+
   if((sourceFormat==FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG)&&isTileMap==true)
   {
    printf("8x8 tiles formats doesn't need an extra optimization.\n");
@@ -530,9 +532,10 @@ int main(int argc,char *argv[])
    exit(1);
   }
   	 
-  if(sourceFormat==FORMAT_OLD_SPRITE)		tile_depth=tile_size; //single pixel accords a single byte
+  if(sourceFormat==FORMAT_OLD_SPRITE)		tile_depth=8; //single pixel accords a single byte
   else if(sourceFormat==FORMAT_UNDERFIRE)	tile_depth=5;
   else										tile_depth=4;
+
   tiles_x=file_size/((tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8);
   tiles_y=1; //Because a tile data, unlike the standart GFX files, hasn't a size parameters by themselves, it'd be a more expedient to present all the data piece as a very-very long tiles row
  }
@@ -593,6 +596,34 @@ int main(int argc,char *argv[])
 
 	for(y=0;y<tile_size;y++)
  	{
+     for(x=0;x<tile_size/coef;x++)
+	 {
+	  if(sourceFormat<FORMAT_ROHGA_DECR||sourceFormat==FORMAT_HALF_DEPTH) //for future linear source formats
+	  {
+	   pix0=get_tile_el_value(x,y);
+
+       if(sourceFormat<FORMAT_ROHGA_DECR||sourceFormat==FORMAT_HALF_DEPTH)
+	   {
+        if(tx<tiles_x/2)	pix0>>4;
+        else				pix0&=0xf;
+	   }
+	  }
+      else
+      {
+       for(z=0;z<tile_depth;z++)
+	   {
+        if(sourceFormat==FORMAT_OLD_SPRITE)	pix0|=((((get_tile_el_value(x,y)&(1<<(z%8))))>>(z%8))<<(3-(x%4)))<<((1-(z%2))*4);
+        else								pix0|=(((get_tile_el_value((x/8)*4+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<(x%8);
+	   }
+      }
+
+      if(!(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_TC0180VCU)) tiles[]
+      else
+	  {
+       if(targetFormat==TARGET_OLD_SPRITE)	tiles[(full_size==true?tile_x:tile_x/4)*128+...]=pix0;
+       if(targetFormat==TARGET_TC0180VCU)	tiles[(full_size==true?tile_x:tile_x/4)*128+...]=pix0;
+      }
+	 }
 	 if(sourceFormat<FORMAT_ROHGA_DECR)
 	 {
 	  if(targetFormat==TARGET_TC0180VCU)
