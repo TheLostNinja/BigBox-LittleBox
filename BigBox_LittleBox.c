@@ -641,7 +641,7 @@ int main(int argc,char *argv[])
 	  {
        for(z=0;z<tile_depth;z++)
        {
-        for(x=0;x<tile_size;x++)	pix0|=(((get_tile_el_value((x/8)*4+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<(x%8);
+        for(x=0;x<tile_size;x++)	pix0|=(((get_tile_el_value((1-(x/8))*4+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<(x%8);
 
 	   	if(z/2==0)					fputc(pix0,tilefile1);
 		else						fputc(pix0,tilefile2);
