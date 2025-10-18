@@ -631,14 +631,14 @@ int main(int argc,char *argv[])
 		 {
 	   	  for(z=0;z<8;z++) tiles[(tile_y*tiles_y+tile_x)*1024+y*32+(x/4)*4+(7-z)/2]|=((((get_tile_el_value(x,y)&(1<<(z%8))))>>(z%8))<<(3-(x%4)))<<((1-(z%2))*4);
 		 }
-		 else if(targetFormat==TARGET_MODEL3_8) fputc(get_tile_el_value(x/4+(3-(x%4)),y),tilefile1);
+		 else fputc(get_tile_el_value(x/4+(3-(x%4)),y),tilefile1);
         }
        }
       }
 	 }
 	 else
 	 {
-      if(targetFormat==FORMAT_NEO_MIRROR)
+      if(targetFormat==TARGET_NEOGEP_SPR)
 	  {
        for(z=0;z<tile_depth;z++)
        {
