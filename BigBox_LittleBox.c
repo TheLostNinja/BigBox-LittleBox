@@ -455,7 +455,7 @@ int main(int argc,char *argv[])
  fread(bytStr,1,file_size,source_file);
 
  //Process based on target format
- if(full_size==true&&!(sourceFormat==FORMAT_PLANAR4_16x16||targetFormat==TARGET_SPRITE_OLD||targetFormat==TARGET_TC0180VCU))
+ if(full_size==true&&!(sourceFormat==FORMAT_PLANAR4_16x16||targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_TC0180VCU))
  {
   printf("Selected source or target format has only one variation of size.\n");
   fclose(source_file);
@@ -484,7 +484,7 @@ int main(int argc,char *argv[])
  long	tiles_x;
  short	tiles_y;
 
- if((targetFormat==TARGET_MODEL3_8&&!(sourceFormat<=FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG||(sourceFormat==FORMAT_PLANAR4_16x16&&full_size==false)||sourceFormat==FORMAT_SPRITE_OLD||sourceFormat==FORMAT_TAITO_Z||sourceFormat==FORMAT_UNDERFIRE||sourceFormat==FORMAT_HALF_DEPTH))
+ if((targetFormat==TARGET_MODEL3_8&&!(sourceFormat<=FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG||(sourceFormat==FORMAT_PLANAR4_16x16&&full_size==false)||sourceFormat==FORMAT_OLD_SPRITE||sourceFormat==FORMAT_TAITO_Z||sourceFormat==FORMAT_UNDERFIRE||sourceFormat==FORMAT_HALF_DEPTH))
 	 ||(targetFormat==TARGET_NEOGEO_SPR&&!(sourceFormat==FORMAT_PLANAR4_16x16||sourceFormat==FORMAT_TAITO_Z))
 	 ||!(targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_MODEL3_8)&&sourceFormat>=FORMAT_ROHGA_DECR)
  {
