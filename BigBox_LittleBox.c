@@ -652,34 +652,34 @@ int main(int argc,char *argv[])
 	  }
       else
 	  {
-	  }
-  	  for(x=0;x<tile_size;x++)
-  	  {
-	   if(sourceFormat==FORMAT_HALF_DEPTH)
-	   {
-	   	pix0=get_tile_el_value(z,y);
-		if(tx<tiles_x/2)	pix0>>4;
-		else				pix0&=0xf;
-	   }
-	   else
-	   {
-	   	for(z=0;z<tile_depth;z++)
-	   	{
-		 pix1=get_tile_el_value(z,y);
-		 if(sourceFormat==FORMAT_OLD_SPRITE)
-		 {
-		  if(z%2)	pix1>>4;
-		  else		pix1&=0xf;
+  	   for(x=0;x<tile_size;x++)
+  	   {
+	    if(sourceFormat==FORMAT_HALF_DEPTH)
+	    {
+	   	 pix0=get_tile_el_value(z,y);
+		 if(tx<tiles_x/2)	pix0>>4;
+		 else				pix0&=0xf;
+	    }
+	    else
+	    {
+	   	 for(z=0;z<tile_depth;z++)
+	   	 {
+		  pix1=get_tile_el_value(z,y);
+		  if(sourceFormat==FORMAT_OLD_SPRITE)
+		  {
+		   if(z%2)	pix1>>4;
+		   else		pix1&=0xf;
 
-		  pix1=(((pix1&(1<<(z%4)))>>(z%4))<<(7-z));
-         }
-		 else	pix1=((pix1&(1<<(((7-x)/4)*4+(x%4))))>>(((7-x)/4)*4+(x%4)))<<z;
-		}
-		pix0|=pix1;
+		   pix1=(((pix1&(1<<(z%4)))>>(z%4))<<(7-z));
+          }
+		  else	pix1=((pix1&(1<<(((7-x)/4)*4+(x%4))))>>(((7-x)/4)*4+(x%4)))<<z;
+		 }
+		 pix0|=pix1;
+	    }
+	    fputc(pix0,tilefile1);
+	    pix0=0;
 	   }
-	   fputc(pix0,tilefile1);
-	   pix0=0;
-	  }
+	  } 
 	 }
     }
    }
