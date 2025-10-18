@@ -638,7 +638,7 @@ int main(int argc,char *argv[])
 	 }
 	 else
 	 {
-      if(targetFormat==TARGET_NEOGEP_SPR)
+      if(targetFormat==TARGET_NEOGEO_SPR)
 	  {
        for(z=0;z<tile_depth;z++)
        {
