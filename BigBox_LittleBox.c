@@ -636,8 +636,7 @@ int main(int argc,char *argv[])
  for(i=0;i<sourceFormat<FORMAT_ROHGA_DECR?img_width*img_height:tile_size*tile_size*depth/8;i++)
  {
   if(targetFormat!=TARGET_NEOGEO_SPR||(targetFormat==TARGET_NEOGEO_SPR&&i%4<2))	fputc(tiles[i],tilefile1);
-  else if(targetFormat==TARGET_NEOGEO_SPR&&i%4>=2)									fputc(tiles[i],tilefile2);
- }
+  else if(targetFormat==TARGET_NEOGEO_SPR&&i%4>=2)								fputc(tiles[i],tilefile2);
  }
 
  if(sourceFormat<FORMAT_ROHGA_DECR)
