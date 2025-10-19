@@ -602,7 +602,7 @@ int main(int argc,char *argv[])
 	  {
 	   pix0=get_tile_el_value(x,y);
 
-       if(sourceFormat<FORMAT_ROHGA_DECR||sourceFormat==FORMAT_HALF_DEPTH)
+       if(sourceFormat==FORMAT_HALF_DEPTH)
 	   {
         if(tx<tiles_x/2)	pix0>>4;
         else				pix0&=0xf;
@@ -612,104 +612,32 @@ int main(int argc,char *argv[])
       {
        for(z=0;z<tile_depth;z++)
 	   {
-        if(sourceFormat==FORMAT_OLD_SPRITE)	pix0|=((((get_tile_el_value(x,y)&(1<<(z%8))))>>(z%8))<<(3-(x%4)))<<((1-(z%2))*4);
+        if(sourceFormat==FORMAT_OLD_SPRITE) pix0|=((((get_tile_el_value(x,y)&(1<<(z%8))))>>(z%8))<<(3-(x%4)))<<((1-(z%2))*4);
         else								pix0|=(((get_tile_el_value((x/8)*4+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<(x%8);
 	   }
       }
 
-      if(targetFormat==TARGET_OLD_SPRITE)		tiles[(full_size==true?tile_x:tile_x/4)*128+...]=pix0;
-      else if(targetFormat==TARGET_TC0180VCU)	tiles[(full_size==true?tile_x:tile_x/4)*128+...]=pix0;
-      else										tiles[tile_size*tile_size*depth/8+y*(tile_size*depth/8)+(targetFormat==TARGET_MODEL3_8?(x/4)*4+(3-(x%4)):x)]=pix0; //linear target formats
-	 }
-	 if(sourceFormat<FORMAT_ROHGA_DECR)
-	 {
-	  if(targetFormat==TARGET_TC0180VCU)
-	  {
-	   for(z=0;z<img_depth;z++)
-	   {
-	   	for(x=0;x<tile_size/coef;x++)
-	   	{
-	   	 pix0|=((get_tile_el_value(x,(ref==true?tile_size-y:y))>>4)&(1<<z)>>z)<<(7-(x%8)*2);
-		 pix1|=((get_tile_el_value(x,(ref==true?tile_size-y:y))&0xf)&(1<<z)>>z)<<(7-(x%8)*2+1);
-
-		 if(full_size==true&&x==tile_size/coef/2)
-		 {
-		  fputc(pix0,tilefile1);
-		  fputc(pix1,tilefile1);
-		  pix0=pix1=0;
-         }
-        }
-	   	fputc(pix0,tilefile1);
-	   	fputc(pix1,tilefile1);
-	   	pix0=pix1=0;
-       }
-      }
-	  else
-	  {
-	   if(targetFormat==TARGET_C123||targetFormat==TARGET_PSIKYO_LATER_GENERATIONS_8||targetFormat==TARGET_ATETRIS)
-	   {
-	   	for(x=0;x<tile_size/coef;x++) fputc(get_tile_el_value(x,y),tilefile1);
-       }
-	   else
-	   {
-	   	for(x=0;x<tile_size;x++)
-	   	{
-		 if(targetFormat==TARGET_OLD_SPRITE)
-		 {
-	   	  for(z=0;z<8;z++) tiles[(tile_y*tiles_y+tile_x)*1024+y*32+(x/4)*4+(7-z)/2]|=((((get_tile_el_value(x,y)&(1<<(z%8))))>>(z%8))<<(3-(x%4)))<<((1-(z%2))*4);
-		 }
-		 else fputc(get_tile_el_value(x/4+(3-(x%4)),y),tilefile1);
-        }
-       }
-      }
-	 }
-	 else
-	 {
-      for(x=0;x<tile_size;x++)
+      if(!(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_TC0180VCU))	tiles[tile_size*tile_size*depth/8+y*(tile_size*depth/8)+(targetFormat==TARGET_MODEL3_8?(x/4)*4+(3-(x%4)):x)]=pix0; //linear target formats
+      else
       {
-       if(sourceFormat==FORMAT_HALF_DEPTH)
-       {
-        pix0=get_tile_el_value(z,y);
-        if(tx<tiles_x/2)	pix0>>4;
-        else				pix0&=0xf;
-       }
        for(z=0;z<tile_depth;z++)
        {
-        if(targetFormat==TARGET_NEOGEO_SPR) tiles[tiles_x*128+(x/8)*64+y*16+z]|=(((get_tile_el_value((x/8)*4+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<(x%8);
-        else
-        {
-         pix1=get_tile_el_value(z,y);
-         if(sourceFormat==FORMAT_OLD_SPRITE)
-         {
-          if(z%2)	pix1>>4;
-          else		pix1&=0xf;
-
-          pix1=(((pix1&(1<<(z%4)))>>(z%4))<<(7-z));
-         }
-         else	pix1=((pix1&(1<<(((7-x)/4)*4+(x%4))))>>(((7-x)/4)*4+(x%4)))<<z;
-        }
-       }
-
-       if(targetFormat==TARGET_MODEL3_8)
-	   {
-        if(sourceFormat!=FORMAT_HALF_DEPTH)	pix0|=pix1;
-		fputc(pix0,tilefile1);
-        if(sourceFormat!=FORMAT_HALF_DEPTH)	pix0=0;
+        if(targetFormat==TARGET_OLD_SPRITE)		tiles[(tile_y*tiles_y+tile_x)*1024+y*32+(x/4)*4+(7-z)/2]|=((((pix0&(1<<(z%8))))>>(z%8))<<(3-(x%4)))<<((1-(z%2))*4);
+        else if(targetFormat==TARGET_TC0180VCU)	tiles[(tile_y*tiles_y+tile_x)*(tile_size*tile_size*depth/8)+y*tile_size+z]=pix0;
 	   }
-      }
+	  }
 	 }
     }
    }
   }
  }
- if(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_NEOGEO_SPR)
+
+ long i;
+ for(i=0;i<sourceFormat<FORMAT_ROHGA_DECR?img_width*img_height:tile_size*tile_size*depth/8;i++)
  {
-  long i;
-  for(i=0;i<sourceFormat<FORMAT_ROHGA_DECR?img_width*img_height:tile_size*tile_size*depth/8;i++)
-  {
-   if(targetFormat!=TARGET_NEOGEO_SPR||(targetFormat==TARGET_NEOGEO_SPR&&i%4<2))	fputc(tiles[i],tilefile1);
-   else if(targetFormat==TARGET_NEOGEO_SPR&&i%4>=2)									fputc(tiles[i],tilefile2);
-  }
+  if(targetFormat!=TARGET_NEOGEO_SPR||(targetFormat==TARGET_NEOGEO_SPR&&i%4<2))	fputc(tiles[i],tilefile1);
+  else if(targetFormat==TARGET_NEOGEO_SPR&&i%4>=2)									fputc(tiles[i],tilefile2);
+ }
  }
 
  if(sourceFormat<FORMAT_ROHGA_DECR)
