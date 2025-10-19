@@ -598,32 +598,34 @@ int main(int argc,char *argv[])
  	{
      for(x=0;x<tile_size/coef;x++)
 	 {
+      pix=0;
+
 	  if(sourceFormat<FORMAT_ROHGA_DECR||sourceFormat==FORMAT_HALF_DEPTH) //for future linear source formats
 	  {
-	   pix0=get_tile_el_value(x,y);
+	   pix=get_tile_el_value(x,y);
 
        if(sourceFormat==FORMAT_HALF_DEPTH)
 	   {
-        if(tx<tiles_x/2)	pix0>>4;
-        else				pix0&=0xf;
+        if(tx<tiles_x/2)	pix>>4;
+        else				pix&=0xf;
 	   }
 	  }
       else
       {
        for(z=0;z<tile_depth;z++)
 	   {
-        if(sourceFormat==FORMAT_OLD_SPRITE) pix0|=((((get_tile_el_value(x,y)&(1<<(z%8))))>>(z%8))<<(3-(x%4)))<<((1-(z%2))*4);
-        else								pix0|=(((get_tile_el_value((x/8)*4+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<(x%8);
+        if(sourceFormat==FORMAT_OLD_SPRITE) pix|=(((z%2?get_tile_el_value((x/4)*4+(3-z/2),y)>>4:get_tile_el_value((x/4)*4+(3-z/2),y)&0xf)&(1<<(3-(x%4))))>>(3-(x%4)))<<(z%8);
+        else								pix|=(((get_tile_el_value((x/8)*tile_depth+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<z;
 	   }
       }
 
-      if(!(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_TC0180VCU))	tiles[tile_size*tile_size*depth/8+y*(tile_size*depth/8)+(targetFormat==TARGET_MODEL3_8?(x/4)*4+(3-(x%4)):x)]=pix0; //linear target formats
+      if(!(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_TC0180VCU))	tiles[tile_size*tile_size*depth/8+y*(tile_size*depth/8)+(targetFormat==TARGET_MODEL3_8?(x/4)*4+(3-(x%4)):x)]=pix; //linear target formats
       else
       {
-       for(z=0;z<tile_depth;z++)
+       for(z=0;z<depth;z++)
        {
-        if(targetFormat==TARGET_OLD_SPRITE)		tiles[(tile_y*tiles_y+tile_x)*1024+y*32+(x/4)*4+(7-z)/2]|=((((pix0&(1<<(z%8))))>>(z%8))<<(3-(x%4)))<<((1-(z%2))*4);
-        else if(targetFormat==TARGET_TC0180VCU)	tiles[(tile_y*tiles_y+tile_x)*(tile_size*tile_size*depth/8)+y*tile_size+z]=pix0;
+        if(targetFormat==TARGET_OLD_SPRITE)		tiles[(tile_y*tiles_y+tile_x)*1024+y*32+(x/4)*4+(7-z)/2]|=((((pix&(1<<z)))>>z)<<(3-(x%4)))<<((1-(z%2))*4);
+        else if(targetFormat==TARGET_TC0180VCU)	tiles[(tile_y*tiles_y+tile_x)*(tile_size*tile_size*depth/8)+y*tile_size+z]|=((pix&(1<<z))>>z)<<(7-(x%8));
 	   }
 	  }
 	 }
