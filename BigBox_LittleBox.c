@@ -536,6 +536,13 @@ int main(int argc,char *argv[])
   else if(sourceFormat==FORMAT_UNDERFIRE)	tile_depth=5;
   else										tile_depth=4;
 
+  if(file_size%((tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8)!=0)
+  {
+   printf("The input file size is not power-of%d!\n",(tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8);
+   fclose(source_file);
+   exit(1);
+  }
+
   tiles_x=file_size/((tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8);
   tiles_y=1; //Because a tile data, unlike the standart GFX files, hasn't a size parameters by themselves, it'd be a more expedient to present all the data piece as a very-very long tiles row
  }
