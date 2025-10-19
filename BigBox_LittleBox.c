@@ -627,7 +627,7 @@ int main(int argc,char *argv[])
 	   }
       }
 
-      if(!(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_TC0180VCU))	tiles[tile_size*tile_size*depth/8+y*(tile_size*depth/8)+(targetFormat==TARGET_MODEL3_8?(x/4)*4+(3-(x%4)):x)]=pix; //linear target formats
+      if(!(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_TC0180VCU))	tiles[tile_size*tile_size*depth/8+y*(tile_size*depth/8)+(targetFormat==TARGET_MODEL3_8?(x/4)*4+(3-(x%4)):x)]=pix; //linear target formats
       else
       {
        for(z=0;z<depth;z++)
@@ -670,6 +670,8 @@ int main(int argc,char *argv[])
 		break;
   }
  }
+
+ free(tiles);
 
  fclose(source_file);
  fclose(tilefile1);
