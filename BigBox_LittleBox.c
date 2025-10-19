@@ -550,7 +550,7 @@ int main(int argc,char *argv[])
  //Process tiles
  long	unique_tiles_base[tiles_x*tiles_y],tile_index,prev_tx,matched_tx,unique_tiles=0;
  int	prev_ty,matched_ty;
- short	tiles[sourceFormat<FORMAT_ROHGA_DECR?img_width*img_height:tile_size*tile_size*depth/8],x,y,z;
+ short	tiles[sourceFormat<FORMAT_ROHGA_DECR?img_width*img_height:tiles_x*(tile_size*tile_size*depth/8)],x,y,z;
  bool	match_found;
 
  for(ty=0;ty<tiles_y;ty++)
