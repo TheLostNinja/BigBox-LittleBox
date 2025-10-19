@@ -624,8 +624,9 @@ int main(int argc,char *argv[])
       {
        for(z=0;z<depth;z++)
        {
-        if(targetFormat==TARGET_OLD_SPRITE)		tiles[(tile_y*tiles_y+tile_x)*1024+y*32+(x/4)*4+(7-z)/2]|=((((pix&(1<<z)))>>z)<<(3-(x%4)))<<((1-(z%2))*4);
-        else if(targetFormat==TARGET_TC0180VCU)	tiles[(tile_y*tiles_y+tile_x)*(tile_size*tile_size*depth/8)+y*tile_size+z]|=((pix&(1<<z))>>z)<<(7-(x%8));
+        if(targetFormat==TARGET_OLD_SPRITE)			tiles[(tile_y*tiles_y+tile_x)*1024+y*32+(x/4)*4+(7-z)/2]|=((((pix&(1<<z)))>>z)<<(3-(x%4)))<<((1-(z%2))*4);
+        else if(targetFormat==TARGET_NEOGEO_SPR)	tiles[tile_x*128+(x/8)*64+y*4+z]|=((pix&(1<<z))>>z)<<(x%8);
+        else if(targetFormat==TARGET_TC0180VCU)		tiles[(tile_y*tiles_y+tile_x)*(tile_size*tile_size*depth/8)+y*tile_size+z]|=((pix&(1<<z))>>z)<<(7-(x%8));
 	   }
 	  }
 	 }
