@@ -9,7 +9,7 @@ FILE			*source_file, *tilefile1, *tilefile2, *tilemapfile, *palfile;
 long			input_size,tx,tile_x;
 int				colNum,pix_loc,img_width,img_height,ty,tile_y;
 short			pal_loc,img_depth,tile_depth,tile_size,coef,pix;
-bool			full_size,ref,isTileMap;
+bool			full_size,ref,plan_rev,isTileMap;
 
 enum SourceFormat
 {
@@ -84,6 +84,7 @@ const struct ArgsInfo additional_args[] = {
     {"tm", "generate tilemap (only for BMP images and non-8x8 tile formats)"},
     {"full", "use a larger version of some tile formats (only for planar4_16x16 source and old_sprite and tc0180vcu targets)"},
     {"ref", "Reflect an input or output (depends on the source and target formats combination) tiles. This feature is used by taito_z (horizontal) and tc0180vcu (vertical, as a target exclusively) only."},
+    {"plan_rev", "Some formats (planar4_16x16 and neo_vert) has a 2 variations - with direct and revesal (tiles for Taito TC0180VCU chip and some SNK’s pre-NeoGeo M68k-based arcade games - e. g. Search & Rescue - sprites). This argument make tiles to be read in the reversal order - plane 4 first, then 3, 2 and 1."},
     {"h, --help", "show this help message"},
     {NULL, NULL}
 };
@@ -185,10 +186,11 @@ void process_arguments(int argc,char* argv[])
     exit(1);
    }
   }
-  else if(strcmp(argv[i],"-tm")==0)		isTileMap=true;
-  else if(strcmp(argv[i],"-full")==0)	full_size=true;
-  else if(strcmp(argv[i],"-ref")==0)	ref=true;
-  else if(i==1)							filename=argv[i];
+  else if(strcmp(argv[i],"-tm")==0)			isTileMap=true;
+  else if(strcmp(argv[i],"-full")==0)		full_size=true;
+  else if(strcmp(argv[i],"-ref")==0)		ref=true;
+  else if(strcmp(argv[i],"-plan_rev")==0)	plan_rev=true;
+  else if(i==1)								filename=argv[i];
   else
   {
    printf("Unknown argument: %s\n",argv[i]);
@@ -265,7 +267,7 @@ int get_tile_el_value(short x,short y)
  if(sourceFormat==FORMAT_BMP)					return bytStr[input_size-(((tile_y*tile_size+y)*img_width)/coef+((img_width-tile_x*tile_size)/coef-x))];
  else if(sourceFormat==FORMAT_ROHGA_DECR)		return bytStr[(input_size/2)*((x%4)/2)+tile_x*16+(x%2)+y*2];
  else if(sourceFormat==FORMAT_PCE_CG)			return bytStr[16*((x%4)/2)+tile_x*32+(x%2)+y*2];
- else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(full_size?1-x/4:(targetFormat==TARGET_NEOGEO_SPR?(x/4):tile_x%2)*64)+(targetFormat==TARGET_NEOGEO_SPR?0:((tile_x%4)/2)*32)+(((x%4)+y*4)<<full_size)];
+ else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(full_size?1-x/4:(targetFormat==TARGET_NEOGEO_SPR?(x/4):tile_x%2)*64)+(targetFormat==TARGET_NEOGEO_SPR?0:((tile_x%4)/2)*32)+(((plan_rev?3-(x%4):x%4)+y*4)<<full_size)];
  else if(sourceFormat==FORMAT_NEO_MIRROR)		return bytStr[tile_x*128+(x/4)*64+(x%4)+(y*4)];
  else if(sourceFormat==FORMAT_OLD_SPRITE)		return bytStr[(tile_x/16)*1024+(tile_x%4)*8+((tile_x%16)/4)*256+(x/4)*4+x/2+y*32];
  else if(sourceFormat==FORMAT_TAITO_Z)			return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/2)*64+(ref==true?1-((targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2):(targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2)+(3-x)*2+y*8];
@@ -469,21 +471,6 @@ int main(int argc,char *argv[])
   exit(1);
  }
 
- short depth;
-
- //Get target format tile size
- if(targetFormat==TARGET_OLD_SPRITE)															tile_size=16<<full_size;
- else if(targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_PSIKYO_LATER_GENERATIONS_8)		tile_size=16;
- else if(targetFormat==TARGET_TC0180VCU)														tile_size=8<<full_size;
- else																							tile_size=8;
-
- //Then depth
- if(targetFormat==TARGET_NEOGEO_SPR||targetFormat>TARGET_PSIKYO_LATER_GENERATIONS_8)			depth=4;
- else																							depth=8;
-
- long	tiles_x;
- short	tiles_y;
-
  if((targetFormat==TARGET_MODEL3_8&&!(sourceFormat<=FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG||(sourceFormat==FORMAT_PLANAR4_16x16&&full_size==false)||sourceFormat==FORMAT_OLD_SPRITE||sourceFormat==FORMAT_TAITO_Z||sourceFormat==FORMAT_UNDERFIRE||sourceFormat==FORMAT_HALF_DEPTH))
 	 ||(targetFormat==TARGET_NEOGEO_SPR&&!(sourceFormat==FORMAT_PLANAR4_16x16||sourceFormat==FORMAT_NEO_MIRROR||sourceFormat==FORMAT_TAITO_Z))
 	 ||!(targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_MODEL3_8)&&sourceFormat>=FORMAT_ROHGA_DECR)
@@ -499,6 +486,28 @@ int main(int argc,char *argv[])
   fclose(source_file);
   exit(1);
  }
+
+ if(plan_rev&&!(sourceFormat==FORMAT_PLANAR4_16x16))
+ {
+  printf("Chosen source format reading a planes in the direct order only.\n");
+  fclose(source_file);
+  exit(1);
+ }
+
+ short depth;
+
+ //Get target format tile size
+ if(targetFormat==TARGET_OLD_SPRITE)															tile_size=16<<full_size;
+ else if(targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_PSIKYO_LATER_GENERATIONS_8)		tile_size=16;
+ else if(targetFormat==TARGET_TC0180VCU)														tile_size=8<<full_size;
+ else																							tile_size=8;
+
+ //Then depth
+ if(targetFormat==TARGET_NEOGEO_SPR||targetFormat>TARGET_PSIKYO_LATER_GENERATIONS_8)			depth=4;
+ else																							depth=8;
+
+ long	tiles_x;
+ short	tiles_y;
 
  if(sourceFormat<FORMAT_ROHGA_DECR)
  {
