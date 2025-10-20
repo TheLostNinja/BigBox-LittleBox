@@ -6,7 +6,7 @@ unsigned char*	bytStr;
 enum 			SourceFormat sourceFormat;
 enum 			TargetFormat targetFormat;
 FILE			*source_file, *tilefile1, *tilefile2, *tilemapfile, *palfile;
-long			file_size,tx,tile_x;
+long			input_size,tx,tile_x;
 int				colNum,pix_loc,img_width,img_height,ty,tile_y;
 short			pal_loc,img_depth,tile_depth,tile_size,coef,pix;
 bool			full_size,ref,isTileMap;
@@ -214,7 +214,7 @@ void check_format()
   	   	exit(1);
 	   }
 
-	   if((bytStr[2]|(bytStr[3]<<8)|(bytStr[4]<<16)|(bytStr[5]<<24))!=file_size)
+	   if((bytStr[2]|(bytStr[3]<<8)|(bytStr[4]<<16)|(bytStr[5]<<24))!=input_size)
 	   {
        	printf("The file is broken!\n");
        	fclose(source_file);
@@ -262,15 +262,15 @@ void check_format()
 
 int get_tile_el_value(short x,short y)
 {
- if(sourceFormat==FORMAT_BMP)					return bytStr[file_size-(((tile_y*tile_size+y)*img_width)/coef+((img_width-tile_x*tile_size)/coef-x))];
- else if(sourceFormat==FORMAT_ROHGA_DECR)		return bytStr[(file_size/2)*((x%4)/2)+tile_x*16+(x%2)+y*2];
+ if(sourceFormat==FORMAT_BMP)					return bytStr[input_size-(((tile_y*tile_size+y)*img_width)/coef+((img_width-tile_x*tile_size)/coef-x))];
+ else if(sourceFormat==FORMAT_ROHGA_DECR)		return bytStr[(input_size/2)*((x%4)/2)+tile_x*16+(x%2)+y*2];
  else if(sourceFormat==FORMAT_PCE_CG)			return bytStr[16*((x%4)/2)+tile_x*32+(x%2)+y*2];
  else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(full_size?x/4:(targetFormat==TARGET_NEOGEO_SPR?(x/4):tile_x%2)*64)+(targetFormat==TARGET_NEOGEO_SPR?0:((tile_x%4)/2)*32)+(((x%3)+y*4)<<full_size)];
  else if(sourceFormat==FORMAT_NEO_MIRROR)		return bytStr[tile_x*128+(x/4)*64+(x%4)+(y*4)];
  else if(sourceFormat==FORMAT_OLD_SPRITE)		return bytStr[(tile_x/16)*1024+(tile_x%4)*8+((tile_x%16)/4)*256+(x/4)*4+x/2+y*32];
  else if(sourceFormat==FORMAT_TAITO_Z)			return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/2)*64+(ref==true?1-((targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2):(targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2)+(3-x)*2+y*8];
  else if(sourceFormat==FORMAT_UNDERFIRE)		return bytStr[(tile_x/4)*160+(1-(tile_x%2))*5+((tile_x%4)/2)*80+x+y*10];
- else if(sourceFormat==FORMAT_HALF_DEPTH)		return bytStr[((tile_x%(file_size/tile_size*tile_depth/2))/4)*256+(tile_x%2)*8+((tile_x%4)/2)*128+x+y*16];
+ else if(sourceFormat==FORMAT_HALF_DEPTH)		return bytStr[((tile_x%(input_size/tile_size*tile_depth/2))/4)*256+(tile_x%2)*8+((tile_x%4)/2)*128+x+y*16];
 
  return 0;
 }
@@ -369,7 +369,7 @@ int main(int argc,char *argv[])
   return 1;
  }
 
- file_size=ftell(source_file);
+ input_size=ftell(source_file);
 
  char* dot_pos=strrchr(filename,'.');
  char tilename1[256];
@@ -444,7 +444,7 @@ int main(int argc,char *argv[])
 
  fseek(source_file,0L,SEEK_SET);
 
- bytStr=(unsigned char*)malloc(file_size);
+ bytStr=(unsigned char*)malloc(input_size);
  if(bytStr==NULL)
  {
   printf("Memory allocation failed (at the format check stage)\n");
@@ -452,7 +452,7 @@ int main(int argc,char *argv[])
   exit(1);
  }
 
- fread(bytStr,1,file_size,source_file);
+ fread(bytStr,1,input_size,source_file);
 
  //Process based on target format
  if(full_size==true&&!(sourceFormat==FORMAT_PLANAR4_16x16||targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_TC0180VCU))
@@ -536,22 +536,22 @@ int main(int argc,char *argv[])
   else if(sourceFormat==FORMAT_UNDERFIRE)	tile_depth=5;
   else										tile_depth=4;
 
-  if(file_size%((tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8)!=0)
+  if(input_size%((tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8)!=0)
   {
    printf("The input file size is not power-of%d!\n",(tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8);
    fclose(source_file);
    exit(1);
   }
 
-  tiles_x=file_size/((tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8);
+  tiles_x=input_size/((tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8);
   tiles_y=1; //Because a tile data, unlike the standart GFX files, hasn't a size parameters by themselves, it'd be a more expedient to present all the data piece as a very-very long tiles row
  }
 
  //Process tiles
- long			unique_tiles_base[tiles_x*tiles_y],tile_index,prev_tx,matched_tx,unique_tiles=0;
+ long			unique_tiles_base[tiles_x*tiles_y],tile_index,prev_tx,matched_tx,unique_tiles=0,output_size=sourceFormat<FORMAT_ROHGA_DECR?img_width*img_height:tiles_x*(tile_size*tile_size*depth/8);
  int			prev_ty,matched_ty;
  short			x,y,z;
- unsigned char*	tiles=(unsigned char*)calloc(sourceFormat<FORMAT_ROHGA_DECR?img_width*img_height:tiles_x*(tile_size*tile_size*depth/8),sizeof(unsigned char));
+ unsigned char*	tiles=(unsigned char*)calloc(output_size,sizeof(unsigned char));
  bool			match_found;
 
  for(ty=0;ty<tiles_y;ty++)
@@ -644,7 +644,7 @@ int main(int argc,char *argv[])
  }
 
  long i;
- for(i=0;i<sourceFormat<FORMAT_ROHGA_DECR?img_width*img_height:tiles_x*(tile_size*tile_size*depth/8);i++)
+ for(i=0;i<output_size;i++)
  {
   if(targetFormat!=TARGET_NEOGEO_SPR||(targetFormat==TARGET_NEOGEO_SPR&&!((i/2)%2)))	fputc(tiles[i],tilefile1);
   else if(targetFormat==TARGET_NEOGEO_SPR&&((i/2)%2))									fputc(tiles[i],tilefile2);
