@@ -265,7 +265,7 @@ int get_tile_el_value(short x,short y)
  if(sourceFormat==FORMAT_BMP)					return bytStr[input_size-(((tile_y*tile_size+y)*img_width)/coef+((img_width-tile_x*tile_size)/coef-x))];
  else if(sourceFormat==FORMAT_ROHGA_DECR)		return bytStr[(input_size/2)*((x%4)/2)+tile_x*16+(x%2)+y*2];
  else if(sourceFormat==FORMAT_PCE_CG)			return bytStr[16*((x%4)/2)+tile_x*32+(x%2)+y*2];
- else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(full_size?x/4:(targetFormat==TARGET_NEOGEO_SPR?(x/4):tile_x%2)*64)+(targetFormat==TARGET_NEOGEO_SPR?0:((tile_x%4)/2)*32)+(((x%3)+y*4)<<full_size)];
+ else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(full_size?1-x/4:(targetFormat==TARGET_NEOGEO_SPR?(x/4):tile_x%2)*64)+(targetFormat==TARGET_NEOGEO_SPR?0:((tile_x%4)/2)*32)+(((x%3)+y*4)<<full_size)];
  else if(sourceFormat==FORMAT_NEO_MIRROR)		return bytStr[tile_x*128+(x/4)*64+(x%4)+(y*4)];
  else if(sourceFormat==FORMAT_OLD_SPRITE)		return bytStr[(tile_x/16)*1024+(tile_x%4)*8+((tile_x%16)/4)*256+(x/4)*4+x/2+y*32];
  else if(sourceFormat==FORMAT_TAITO_Z)			return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/2)*64+(ref==true?1-((targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2):(targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2)+(3-x)*2+y*8];
@@ -623,7 +623,7 @@ int main(int argc,char *argv[])
        for(z=0;z<tile_depth;z++)
 	   {
         if(sourceFormat==FORMAT_OLD_SPRITE) pix|=(((z%2?get_tile_el_value((x/4)*4+(3-z/2),y)>>4:get_tile_el_value((x/4)*4+(3-z/2),y)&0xf)&(1<<(3-(x%4))))>>(3-(x%4)))<<(z%8);
-        else								pix|=(((get_tile_el_value((x/8)*tile_depth+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<z;
+        else								pix|=(((get_tile_el_value((x/8)*tile_depth+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<(sourceFormat==FORMAT_PLANAR4_16x16&&full_size==true?tile_depth-z:z);
 	   }
       }
 
