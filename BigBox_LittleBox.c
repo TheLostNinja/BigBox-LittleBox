@@ -548,7 +548,7 @@ int main(int argc,char *argv[])
  }
 
  //Process tiles
- long			unique_tiles_base[tiles_x*tiles_y],tile_index,prev_tx,matched_tx,unique_tiles=0,output_size=sourceFormat<FORMAT_ROHGA_DECR?img_width*img_height:tiles_x*(tile_size*tile_size*depth/8);
+ long			unique_tiles_base[tiles_x*tiles_y],tile_index,prev_tx,matched_tx,unique_tiles=0,output_size=tiles_x*tiles_y*(tile_size*tile_size*depth/8);
  int			prev_ty,matched_ty;
  short			x,y,z;
  unsigned char*	tiles=(unsigned char*)calloc(output_size,sizeof(unsigned char));
@@ -644,7 +644,10 @@ int main(int argc,char *argv[])
  }
 
  long i;
- for(i=0;i<isTileMap?unique_tiles*(tile_size*tile_size*depth/8):output_size;i++)
+
+ if(isTileMap) output_size=unique_tiles*(tile_size*tile_size*depth/8);
+
+ for(i=0;i<output_size;i++)
  {
   if(targetFormat!=TARGET_NEOGEO_SPR||(targetFormat==TARGET_NEOGEO_SPR&&!((i/2)%2)))	fputc(tiles[i],tilefile1);
   else if(targetFormat==TARGET_NEOGEO_SPR&&((i/2)%2))									fputc(tiles[i],tilefile2);
