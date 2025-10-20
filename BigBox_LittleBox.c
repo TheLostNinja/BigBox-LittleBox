@@ -623,7 +623,7 @@ int main(int argc,char *argv[])
        for(z=0;z<tile_depth;z++)
 	   {
         if(sourceFormat==FORMAT_OLD_SPRITE) pix|=(((z%2?get_tile_el_value((x/4)*4+(3-z/2),y)>>4:get_tile_el_value((x/4)*4+(3-z/2),y)&0xf)&(1<<(3-(x%4))))>>(3-(x%4)))<<(z%8);
-        else								pix|=(((get_tile_el_value((x/8)*tile_depth+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<(sourceFormat==FORMAT_PLANAR4_16x16&&full_size==true?tile_depth-z:z);
+        else								pix|=(((get_tile_el_value((x/8)*tile_depth+z,y))&(1<<(7-(x%8))))>>(7-(x%8)))<<z;
 	   }
       }
 
