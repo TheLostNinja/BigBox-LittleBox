@@ -645,7 +645,7 @@ int main(int argc,char *argv[])
 
  long i;
 
- if(isTileMap) output_size=unique_tiles*(tile_size*tile_size*depth/8);
+ if(isTileMap) output_size=(unique_tiles+1)*(tile_size*tile_size*depth/8);
 
  for(i=0;i<output_size;i++)
  {
