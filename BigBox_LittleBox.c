@@ -255,35 +255,10 @@ int get_tile_el_value(short x,short y)
  {
   if(targetFormat==TARGET_NEOGEO_SPR)
   {
-   long			base_tile_addr=tile_x*128;
-
-   if(composite)
-   {
-    short		sub_tile_y=y/8;
-    short		sub_tile_x=x/4;
-    short		sub_tile_offset=sub_tile_y*64+sub_tile_x*32;
-    short 		plane_offset=(plan_rev?3-(x%4):(x%4));
-    short 		row_offset=(y%8)*4;
-
-    return bytStr[base_tile_addr+sub_tile_offset+plane_offset+row_offset];
-   }
-   else if(full_size)
-   {
-    short		row_addr=y*8;
-    short		plane_addr=(plan_rev?(3+(x/4)*8-x):x);
-
-    return bytStr[base_tile_addr+row_addr+plane_addr];
-   }
+   if(composite)								return bytStr[tile_x*128+(y/8)*64+(1-x/4)*32+(plan_rev?3-(x%4):(x%4))+(y%8)*4];
+   else if(full_size)							return bytStr[tile_x*128+y*8+(plan_rev?(3+(x/4)*8-x):x)];
   }
-  else
-  {
-   long			base_addr=(tile_x/4)*128;
-   short		subtile_offset=(tile_x%2)*64+((tile_x%4)/2)*32;
-   short		plane_offset=(plan_rev?3-(x%4):(x%4));
-   short		row_offset=y*4;
-
-   return bytStr[base_addr+subtile_offset+plane_offset+row_offset];
-  }
+  else											return bytStr[(tile_x/4)*128+(tile_x%2)*64+((tile_x%4)/2)*32+(plan_rev?3-(x%4):(x%4))+y*4];
  }
  else if(sourceFormat==FORMAT_NEO_MIRROR)		return bytStr[tile_x*128+(x/4)*64+(x%4)+(y*4)];
  else if(sourceFormat==FORMAT_OLD_SPRITE)		return bytStr[(tile_x/16)*1024+(tile_x%4)*8+((tile_x%16)/4)*256+(x/4)*4+x/2+y*32];
