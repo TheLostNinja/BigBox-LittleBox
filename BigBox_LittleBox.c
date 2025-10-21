@@ -267,7 +267,7 @@ int get_tile_el_value(short x,short y)
  if(sourceFormat==FORMAT_BMP)					return bytStr[input_size-(((tile_y*tile_size+y)*img_width)/coef+((img_width-tile_x*tile_size)/coef-x))];
  else if(sourceFormat==FORMAT_ROHGA_DECR)		return bytStr[(input_size/2)*((x%4)/2)+tile_x*16+(x%2)+y*2];
  else if(sourceFormat==FORMAT_PCE_CG)			return bytStr[16*((x%4)/2)+tile_x*32+(x%2)+y*2];
- else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(targetFormat==TARGET_NEOGEO_SPR?(1-x/4)*(1<<((1-full_size)*6)):(tile_x%2)*64)+(targetFormat==TARGET_NEOGEO_SPR?(y/8)*32:((tile_x%4)/2)*32)+(((plan_rev?3-(x%4):x%4)+y*4)<<full_size)];
+ else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(targetFormat==TARGET_NEOGEO_SPR?(1-x/4)*(1<<((1-full_size)*5)):(tile_x%2)*64)+(targetFormat==TARGET_NEOGEO_SPR?(y/8)*64:((tile_x%4)/2)*32)+(((plan_rev?3-(x%4):x%4)+y*4)<<full_size)];
  else if(sourceFormat==FORMAT_NEO_MIRROR)		return bytStr[tile_x*128+(x/4)*64+(x%4)+(y*4)];
  else if(sourceFormat==FORMAT_OLD_SPRITE)		return bytStr[(tile_x/16)*1024+(tile_x%4)*8+((tile_x%16)/4)*256+(x/4)*4+x/2+y*32];
  else if(sourceFormat==FORMAT_TAITO_Z)			return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/2)*64+(ref==true?1-((targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2):(targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2)+(3-x)*2+y*8];
