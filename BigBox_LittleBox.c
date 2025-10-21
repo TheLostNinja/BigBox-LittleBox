@@ -9,7 +9,7 @@ FILE			*source_file, *tilefile1, *tilefile2, *tilemapfile, *palfile;
 long			input_size,tx,tile_x;
 int				colNum,pix_loc,img_width,img_height,ty,tile_y;
 short			pal_loc,img_depth,tile_depth,tile_size,coef,pix;
-bool			full_size,ref,plan_rev,isTileMap;
+bool			full_size,ref,plan_rev,composite,isTileMap;
 
 enum SourceFormat
 {
@@ -85,6 +85,7 @@ const struct ArgsInfo additional_args[] = {
     {"full", "use a larger version of some tile formats (only for planar4_16x16 source and old_sprite and tc0180vcu targets)"},
     {"ref", "Reflect an input or output (depends on the source and target formats combination) tiles. This feature is used by taito_z (horizontal) and tc0180vcu (vertical, as a target exclusively) only."},
     {"plan_rev", "Some formats (planar4_16x16 and neo_vert) has a 2 variations - with direct and revesal (tiles for Taito TC0180VCU chip and some SNK’s pre-NeoGeo M68k-based arcade games - e. g. Search & Rescue - sprites). This argument make tiles to be read in the reversal order - plane 4 first, then 3, 2 and 1."},
+    {"composite", "Some video chips (e. g. Taito TC0180VCU chip and Toaplan GP9001) can represent all ROM space for the in the both 8x8 and 16x16. If you'll use this argument, the each 16x16 tile will be read as a cluster of 4 8x8 pieces, where grouping order is "top left - top right - bottom left - bottom right"."},
     {"h, --help", "show this help message"},
     {NULL, NULL}
 };
@@ -152,6 +153,13 @@ void print_arguments(int argc,char* argv[])
  }
 }
 
+void error(char* message[])
+{
+ printf(message);
+ fclose(source_file);
+ exit(1);
+}
+
 void process_arguments(int argc,char* argv[])
 {
  int i;
@@ -190,6 +198,7 @@ void process_arguments(int argc,char* argv[])
   else if(strcmp(argv[i],"-full")==0)		full_size=true;
   else if(strcmp(argv[i],"-ref")==0)		ref=true;
   else if(strcmp(argv[i],"-plan_rev")==0)	plan_rev=true;
+  else if(strcmp(argv[i],"-composite")==0)	composite=true;
   else if(i==1)								filename=argv[i];
   else
   {
@@ -209,26 +218,9 @@ void check_format()
  {
   case FORMAT_BMP:
   	   extension=".bmp";
-  	   if(bytStr[0]!='B'||bytStr[1]!='M')
-  	   {
-       	printf("BMP file signature isn't found!\n");
-       	fclose(source_file);
-  	   	exit(1);
-	   }
-
-	   if((bytStr[2]|(bytStr[3]<<8)|(bytStr[4]<<16)|(bytStr[5]<<24))!=input_size)
-	   {
-       	printf("The file is broken!\n");
-       	fclose(source_file);
-  	   	exit(1);
-	   }
-
-	   if(bytStr[30]|(bytStr[31]<<8)|(bytStr[32]<<16)|(bytStr[33]<<24)!=0)
-	   {
-       	printf("Compressed images is not supported for a while.\n");
-       	fclose(source_file);
-  	   	exit(1);
-	   }
+	   if(bytStr[0]!='B'||bytStr[1]!='M')											error("BMP file signature isn't found!\n");
+	   if((bytStr[2]|(bytStr[3]<<8)|(bytStr[4]<<16)|(bytStr[5]<<24))!=input_size)	error("The file is broken!\n");
+	   if(bytStr[30]|(bytStr[31]<<8)|(bytStr[32]<<16)|(bytStr[33]<<24)!=0)			error("Compressed images is not supported for a while.\n");
 
    	   img_width=(bytStr[18]|(bytStr[19]<<8)|(bytStr[20]<<16)|(bytStr[21]<<24));
    	   img_height=(bytStr[22]|(bytStr[23]<<8)|(bytStr[24]<<16)|(bytStr[25]<<24));
@@ -247,19 +239,11 @@ void check_format()
    	   
   	   break;
   default:
-       printf("Unsupported source format\n");
-       fclose(source_file);
-  	   exit(1);
+       error("Unsupported source format\n");
  }
   
- if(dot==NULL||(strcasecmp(dot,extension)!=0))
- {
-  printf("Loaded file extension doesn't match!\n");
-  fclose(source_file);
-  exit(1);
- }
-
- if(img_depth<=8) coef=8/img_depth;
+ if(dot==NULL||(strcasecmp(dot,extension)!=0))	error("Loaded file extension doesn't match!\n");
+ if(img_depth<=8)								coef=8/img_depth;
 }
 
 int get_tile_el_value(short x,short y)
@@ -267,7 +251,7 @@ int get_tile_el_value(short x,short y)
  if(sourceFormat==FORMAT_BMP)					return bytStr[input_size-(((tile_y*tile_size+y)*img_width)/coef+((img_width-tile_x*tile_size)/coef-x))];
  else if(sourceFormat==FORMAT_ROHGA_DECR)		return bytStr[(input_size/2)*((x%4)/2)+tile_x*16+(x%2)+y*2];
  else if(sourceFormat==FORMAT_PCE_CG)			return bytStr[16*((x%4)/2)+tile_x*32+(x%2)+y*2];
- else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(targetFormat==TARGET_NEOGEO_SPR?(1-x/4)*(1<<((1-full_size)*5)):(tile_x%2)*64)+(targetFormat==TARGET_NEOGEO_SPR?(y/8)*64:((tile_x%4)/2)*32)+(((plan_rev?3-(x%4):x%4)+y*4)<<full_size)];
+ else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(targetFormat==TARGET_NEOGEO_SPR?(1-x/4)*(1<<((1-full_size)*(5+(1-composite)))):(tile_x%2)*64)+(targetFormat==TARGET_NEOGEO_SPR?(1-full_size)*(y/8)*(32<<(1-composite)):((tile_x%4)/2)*32)+(((plan_rev?3-(x%4):x%4)+(composite?y%8:y)*4)<<full_size)];
  else if(sourceFormat==FORMAT_NEO_MIRROR)		return bytStr[tile_x*128+(x/4)*64+(x%4)+(y*4)];
  else if(sourceFormat==FORMAT_OLD_SPRITE)		return bytStr[(tile_x/16)*1024+(tile_x%4)*8+((tile_x%16)/4)*256+(x/4)*4+x/2+y*32];
  else if(sourceFormat==FORMAT_TAITO_Z)			return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/2)*64+(ref==true?1-((targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2):(targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2)+(3-x)*2+y*8];
@@ -447,51 +431,25 @@ int main(int argc,char *argv[])
  fseek(source_file,0L,SEEK_SET);
 
  bytStr=(unsigned char*)malloc(input_size);
- if(bytStr==NULL)
- {
-  printf("Memory allocation failed (at the format check stage)\n");
-  fclose(source_file);
-  exit(1);
- }
+ if(bytStr==NULL)																												error("Memory allocation failed (at the format check stage)\n");
 
  fread(bytStr,1,input_size,source_file);
 
  //Process based on target format
- if(full_size==true&&!(sourceFormat==FORMAT_PLANAR4_16x16||targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_TC0180VCU))
- {
-  printf("Selected source or target format has only one variation of size.\n");
-  fclose(source_file);
-  exit(1);
- }
-
- if(ref==true&&!(sourceFormat==FORMAT_TAITO_Z||targetFormat==TARGET_TC0180VCU))
- {
-  printf("Neither target nor source format use a horizontal or vertical reflection.\n");
-  fclose(source_file);
-  exit(1);
- }
+ if(full_size==true&&!(sourceFormat==FORMAT_PLANAR4_16x16||targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_TC0180VCU))	error("Selected source or target format has only one variation of size.\n");
+ if(ref==true&&!(sourceFormat==FORMAT_TAITO_Z||targetFormat==TARGET_TC0180VCU))													error("Neither target nor source format use a horizontal or vertical reflection.\n");
 
  if((targetFormat==TARGET_MODEL3_8&&!(sourceFormat<=FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG||(sourceFormat==FORMAT_PLANAR4_16x16&&full_size==false)||sourceFormat==FORMAT_OLD_SPRITE||sourceFormat==FORMAT_TAITO_Z||sourceFormat==FORMAT_UNDERFIRE||sourceFormat==FORMAT_HALF_DEPTH))
 	 ||(targetFormat==TARGET_NEOGEO_SPR&&!(sourceFormat==FORMAT_PLANAR4_16x16||sourceFormat==FORMAT_NEO_MIRROR||sourceFormat==FORMAT_TAITO_Z))
-	 ||!(targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_MODEL3_8)&&sourceFormat>=FORMAT_ROHGA_DECR)
- {
-  printf("This source and target formats combination doesn't supported!\n");
-  fclose(source_file);
-  exit(1);
- }
+	 ||!(targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_MODEL3_8)&&sourceFormat>=FORMAT_ROHGA_DECR)						error("This source and target formats combination doesn't supported!\n");
 
- if(isTileMap&&(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_NEOGEO_SPR))
- {
-  printf("Chosen target format is a sprites, not a tilemaps.\n");
-  fclose(source_file);
-  exit(1);
- }
+ if(isTileMap&&(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_NEOGEO_SPR))												error("Chosen target format is a sprites, not a tilemaps.\n");
+ if(plan_rev&&!(sourceFormat==FORMAT_PLANAR4_16x16))																			error("Chosen source format reading a planes in the direct order only.\n");
 
- if(plan_rev&&!(sourceFormat==FORMAT_PLANAR4_16x16))
+ if(composite)
  {
-  printf("Chosen source format reading a planes in the direct order only.\n");
-  fclose(source_file);
-  exit(1);
+  if(sourceFormat!=FORMAT_PLANAR4_16x16)	error("Chosen source format has a monomorphic tile structure.\n");
+  if(sourceFormat!=TARGET_NEOGEO_SPR)		error("Source tile grouping has a sense only with 16x16 target formats.\n");
  }
 
  short depth;
@@ -513,19 +471,8 @@ int main(int argc,char *argv[])
  {
   check_format();
 
-  if(img_depth>8)
-  {
-   printf("Full- and true-coloured images import isn't supported for a while.\n");
-   fclose(source_file);
-   exit(1);
-  }
-
-  if(img_depth!=depth)
-  {
-   printf("Chosen format uses a %d-bit pixels.\n",depth);
-   fclose(source_file);
-   exit(1);
-  }
+  if(img_depth>8)		error("Full- and true-coloured images import isn't supported for a while.\n");
+  if(img_depth!=depth)	error("Chosen format uses a %d-bit pixels.\n",depth);
 
   tiles_x=img_width/tile_size;
   tiles_y=img_height/tile_size;
@@ -534,23 +481,13 @@ int main(int argc,char *argv[])
  {
   coef=1;
 
-  if((sourceFormat==FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG)&&isTileMap==true)
-  {
-   printf("8x8 tiles formats doesn't need an extra optimization.\n");
-   fclose(source_file);
-   exit(1);
-  }
+  if((sourceFormat==FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG)&&isTileMap==true)		error("8x8 tiles formats doesn't need an extra optimization.\n");
   	 
   if(sourceFormat==FORMAT_OLD_SPRITE)		tile_depth=8; //single pixel accords a single byte
   else if(sourceFormat==FORMAT_UNDERFIRE)	tile_depth=5;
   else										tile_depth=4;
 
-  if(input_size%((tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8)!=0)
-  {
-   printf("The input file size is not power-of%d!\n",(tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8);
-   fclose(source_file);
-   exit(1);
-  }
+  if(input_size%((tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8)!=0)	error("The input file size is not power-of%d!\n",(tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8);
 
   tiles_x=input_size/((tile_size*(sourceFormat==FORMAT_TAITO_Z?8:tile_size)*tile_depth)/8);
   tiles_y=1; //Because a tile data, unlike the standart GFX files, hasn't a size parameters by themselves, it'd be a more expedient to present all the data piece as a very-very long tiles row
