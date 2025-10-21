@@ -251,7 +251,41 @@ int get_tile_el_value(short x,short y)
  if(sourceFormat==FORMAT_BMP)					return bytStr[input_size-(((tile_y*tile_size+y)*img_width)/coef+((img_width-tile_x*tile_size)/coef-x))];
  else if(sourceFormat==FORMAT_ROHGA_DECR)		return bytStr[(input_size/2)*((x%4)/2)+tile_x*16+(x%2)+y*2];
  else if(sourceFormat==FORMAT_PCE_CG)			return bytStr[16*((x%4)/2)+tile_x*32+(x%2)+y*2];
- else if(sourceFormat==FORMAT_PLANAR4_16x16)	return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/4)*128+(targetFormat==TARGET_NEOGEO_SPR?(1-x/4)*(1<<((1-full_size)*(5+(1-composite)))):(tile_x%2)*64)+(targetFormat==TARGET_NEOGEO_SPR?(1-full_size)*(y/8)*(32<<(1-composite)):((tile_x%4)/2)*32)+(((plan_rev?3-(x%4):x%4)+(composite?y%8:y)*4)<<full_size)];
+ else if(sourceFormat==FORMAT_PLANAR4_16x16)
+ {
+  if(targetFormat==TARGET_NEOGEO_SPR)
+  {
+   long			base_tile_addr=tile_x*128;
+
+   if(composite)
+   {
+    short		sub_tile_y=y/8;
+    short		sub_tile_x=x/8;
+    short		sub_tile_offset=sub_tile_y*64+sub_tile_x*32;
+    short 		plane_offset=(plan_rev?3-(x%4):(x%4));
+    short 		row_offset=(y%8)*4;
+
+    return bytStr[base_tile_addr+sub_tile_offset+plane_offset+row_offset];
+   }
+   else if(full_size)
+   {
+    short		row_addr=y*8;
+    short		plane_addr=(plan_rev?(3+(x/4)*8-x):x);
+
+    return bytStr[base_tile_addr+row_addr+plane_addr];
+   }
+  }
+  else
+  {
+   long			base_addr=(tile_x/4)*128;
+   short		subtile_offset=(tile_x%2)*64+((tile_x%4)/2)*32;
+   short		plane_offset=(plan_rev?3-(x%4):(x%4));
+   short		row_offset=y*4;
+
+   return bytStr[base_addr+subtile_offset+plane_offset+row_offset];
+  }
+  return bytStr[(?tile_x:tile_x/4)*128+(targetFormat==TARGET_NEOGEO_SPR?(1-x/4)*(1<<((1-full_size)*(5+(1-composite)))):(tile_x%2)*64)+(targetFormat==TARGET_NEOGEO_SPR?(1-full_size)*(y/8)*(32<<(1-composite)):((tile_x%4)/2)*32)+(((plan_rev?3-(x%4):x%4)+(composite?y%8:y)*4)<<full_size)];
+ }
  else if(sourceFormat==FORMAT_NEO_MIRROR)		return bytStr[tile_x*128+(x/4)*64+(x%4)+(y*4)];
  else if(sourceFormat==FORMAT_OLD_SPRITE)		return bytStr[(tile_x/16)*1024+(tile_x%4)*8+((tile_x%16)/4)*256+(x/4)*4+x/2+y*32];
  else if(sourceFormat==FORMAT_TAITO_Z)			return bytStr[(targetFormat==TARGET_NEOGEO_SPR?tile_x:tile_x/2)*64+(ref==true?1-((targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2):(targetFormat==TARGET_NEOGEO_SPR?x:tile_x)%2)+(3-x)*2+y*8];
@@ -450,6 +484,7 @@ int main(int argc,char *argv[])
  {
   if(sourceFormat!=FORMAT_PLANAR4_16x16)	error("Chosen source format has a monomorphic tile structure.");
   if(sourceFormat!=TARGET_NEOGEO_SPR)		error("Source tile grouping has a sense only with 16x16 target formats.");
+  if(full_size)								error("Source format's features are mutually exclusive!");
  }
 
  short depth;
