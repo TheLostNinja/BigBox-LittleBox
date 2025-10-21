@@ -284,7 +284,6 @@ int get_tile_el_value(short x,short y)
 
    return bytStr[base_addr+subtile_offset+plane_offset+row_offset];
   }
-  return bytStr[(?tile_x:tile_x/4)*128+(targetFormat==TARGET_NEOGEO_SPR?(1-x/4)*(1<<((1-full_size)*(5+(1-composite)))):(tile_x%2)*64)+(targetFormat==TARGET_NEOGEO_SPR?(1-full_size)*(y/8)*(32<<(1-composite)):((tile_x%4)/2)*32)+(((plan_rev?3-(x%4):x%4)+(composite?y%8:y)*4)<<full_size)];
  }
  else if(sourceFormat==FORMAT_NEO_MIRROR)		return bytStr[tile_x*128+(x/4)*64+(x%4)+(y*4)];
  else if(sourceFormat==FORMAT_OLD_SPRITE)		return bytStr[(tile_x/16)*1024+(tile_x%4)*8+((tile_x%16)/4)*256+(x/4)*4+x/2+y*32];
