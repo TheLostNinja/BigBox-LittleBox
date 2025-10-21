@@ -260,7 +260,7 @@ int get_tile_el_value(short x,short y)
    if(composite)
    {
     short		sub_tile_y=y/8;
-    short		sub_tile_x=x/8;
+    short		sub_tile_x=x/4;
     short		sub_tile_offset=sub_tile_y*64+sub_tile_x*32;
     short 		plane_offset=(plan_rev?3-(x%4):(x%4));
     short 		row_offset=(y%8)*4;
