@@ -85,7 +85,7 @@ const struct ArgsInfo additional_args[] = {
     {"full", "use a larger version of some tile formats (only for planar4_16x16 source and old_sprite and tc0180vcu targets)"},
     {"ref", "Reflect an input or output (depends on the source and target formats combination) tiles. This feature is used by taito_z (horizontal) and tc0180vcu (vertical, as a target exclusively) only."},
     {"plan_rev", "Some formats (planar4_16x16 and neo_vert) has a 2 variations - with direct and revesal (tiles for Taito TC0180VCU chip and some SNK’s pre-NeoGeo M68k-based arcade games - e. g. Search & Rescue - sprites). This argument make tiles to be read in the reversal order - plane 4 first, then 3, 2 and 1."},
-    {"composite", "Some video chips (e. g. Taito TC0180VCU chip and Toaplan GP9001) can represent all ROM space for the in the both 8x8 and 16x16. If you'll use this argument, the each 16x16 tile will be read as a cluster of 4 8x8 pieces, where grouping order is "top left - top right - bottom left - bottom right"."},
+    {"composite", "Some video chips (e. g. Taito TC0180VCU chip and Toaplan GP9001) can represent all ROM space for the in the both 8x8 and 16x16. If you'll use this argument, the each 16x16 tile will be read as a cluster of 4 8x8 pieces, where grouping order is \"top left - top right - bottom left - bottom right\"."},
     {"h, --help", "show this help message"},
     {NULL, NULL}
 };
