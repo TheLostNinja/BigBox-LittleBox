@@ -239,7 +239,7 @@ void check_format()
    	   
   	   break;
   default:
-       error("Unsupported source format\n");
+       error("Unsupported source format");
  }
   
  if(dot==NULL||(strcasecmp(dot,extension)!=0))	error("Loaded file extension doesn't match!");
@@ -471,8 +471,14 @@ int main(int argc,char *argv[])
  {
   check_format();
 
-  if(img_depth>8)		error("Full- and true-coloured images import isn't supported for a while.");
-  if(img_depth!=depth)	error("Chosen format uses a %d-bit pixels.",depth);
+  if(img_depth>8) error("Full- and true-coloured images import isn't supported for a while.");
+
+  if(img_depth!=depth)
+  {
+   printf("Chosen format uses a %d-bit pixels.",depth);
+   fclose(source_file);
+   exit(1);
+  }
 
   tiles_x=img_width/tile_size;
   tiles_y=img_height/tile_size;
