@@ -462,7 +462,7 @@ int main(int argc,char *argv[])
   if(full_size)								error("Source format's features are mutually exclusive!");
  }
 
- if(plan_rev&&!composite)					error("Even if such formats exists, their support as a source is not added for a while.")
+ if(plan_rev&&!composite)					error("Even if such formats exists, their support as a source is not added for a while.");
 
  short depth;
 
