@@ -194,7 +194,7 @@ void process_arguments(int argc,char* argv[])
   }
   else if(strcmp(argv[i],"-tm")==0)							isTileMap=true;
   else if(strcmp(argv[i],"-full")==0)						full_size=true;
-  else if(strcmp(argv[i],"-row_half_interleaving")==0)		full_size=true;
+  else if(strcmp(argv[i],"-row_half_interleaving")==0)		interleave=true;
   else if(strcmp(argv[i],"-ref")==0)						ref=true;
   else if(strcmp(argv[i],"-plan_rev")==0)					plan_rev=true;
   else if(strcmp(argv[i],"-composite")==0)					composite=true;
