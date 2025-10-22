@@ -9,7 +9,7 @@ FILE			*source_file, *tilefile1, *tilefile2, *tilemapfile, *palfile;
 long			input_size,tx,tile_x;
 int				colNum,pix_loc,img_width,img_height,ty,tile_y;
 short			pal_loc,img_depth,tile_depth,tile_size,coef,pix;
-bool			full_size,ref,plan_rev,composite,isTileMap;
+bool			full_size,interleave,ref,plan_rev,composite,isTileMap;
 
 enum SourceFormat
 {
@@ -59,7 +59,7 @@ const struct FormatInfo source_formats[] = {
     {"rohga_decr", "decrypted 4bpp planar 8x8 tiles for Armored Force Rohga"},
     {"pce_cg", "4bpp planar 8x8 tiles for NEC/Hudson Soft PC Engine/TurboGraphX-16 basic video"},
     //{"linear4_16x16", "Generic 4bpp linear 16x16 tiles. Among the noticeable usage cases is a tiles for Konami K053246 custom sprite chip."},
-    {"planar4_16x16", "Generic 4bpp planar 16x16 tiles. Among the noticeable usage cases is a sprites for Irem M92, some of Data East 16-bit arcades (e. g. Crude Buster/Two Crude) and their various korean hardware clones (the only difference with neogeo_spr - see the target formats list - is a mirrored pixels inside each 8px-wide row), and also tiles for Gaelco Type 1 arcade system, TH Strikes Back hardware, Taito TC0180VCU and Toaplan GP9001 custom video chips. Some later M92 games (e. g. [Superior/Perfect] Soldiers) stores the sprite data by 16px-wide rows instead of 8px-wide like other - in this case you can use the -full arg."},
+    {"planar4_16x16", "Generic 4bpp planar 16x16 tiles. Among the noticeable usage cases is a sprites for Irem M92, some of Data East 16-bit arcades (e. g. Crude Buster/Two Crude) and their various korean hardware clones (the only difference with neogeo_spr - see the target formats list - is a mirrored pixels inside each 8px-wide row), and also tiles for Gaelco Type 1 arcade system, TH Strikes Back hardware, Run&Gun and some other (e. g. Violent Storm) arcades uses Konami K055673 custom sprite chip (see the -row_half_interleaving arg), and Taito TC0180VCU and Toaplan GP9001 custom video chips. Some later M92 games (e. g. [Superior/Perfect] Soldiers) stores the sprite data by 16px-wide rows instead of 8px-wide like other - in this case you can use the -full arg."},
     {"old_sprite", "See the target formats list. Please note that in the source role its size is always gets used fully."},
     {"taito_z", "4bpp planar 16x8 sprite tiles for Taito System Z games (except Chase HQ). Some of them (e.g., Battle Shark and Space Gun) use a pre-mirrored tiles (see the -ref arg)."},
     {"underfire", "5bpp planar 16x16 sprite tiles for Taito's Under Fire hardware"},
@@ -81,6 +81,7 @@ const struct TargetInfo target_formats[] = {
 const struct ArgsInfo additional_args[] = {
     {"tm", "generate tilemap (only for BMP images and non-8x8 tile formats)"},
     {"full", "use a larger version of some tile formats (only for planar4_16x16 source and old_sprite and tc0180vcu targets)"},
+    {"row_half_interleaving", "Cannot be applied without of tie with -full and -in planar4_16x16 args. Reorders the 16px-wide row reading from \"plane 1 left half - plane 1 right half - plane 2 left half - and further until the end\" (as by default) to \"plane 1 left half - plane 2 left half - <...> - plane 1 right half - and further until the end\"."},
     {"ref", "Reflect an input or output (depends on the source and target formats combination) tiles or, in the case of plar4_16x16 source format, just swap the left and right tile halves (very useful for Neo-Geo - like sprites (see the planar4_16x16 source format) conversion to neogeo_spr format). This feature is used by taito_z, planar4_16x16 (horizontal) and tc0180vcu (vertical, as a target exclusively) only."},
     {"plan_rev", "Some formats (planar4_16x16 and neo_vert) has a 2 variations - with direct and revesal (tiles for Taito TC0180VCU chip and some SNK’s pre-NeoGeo M68k-based arcade games - e. g. Search & Rescue - sprites). This argument make tiles to be read in the reversal order - plane 4 first, then 3, 2 and 1."},
     {"composite", "Some video chips (e. g. Taito TC0180VCU chip and Toaplan GP9001) can represent all ROM space for the in the both 8x8 and 16x16. If you'll use this argument, the each 16x16 tile will be read as a cluster of 4 8x8 pieces, where grouping order is \"top left - top right - bottom left - bottom right\"."},
@@ -191,12 +192,13 @@ void process_arguments(int argc,char* argv[])
     exit(1);
    }
   }
-  else if(strcmp(argv[i],"-tm")==0)			isTileMap=true;
-  else if(strcmp(argv[i],"-full")==0)		full_size=true;
-  else if(strcmp(argv[i],"-ref")==0)		ref=true;
-  else if(strcmp(argv[i],"-plan_rev")==0)	plan_rev=true;
-  else if(strcmp(argv[i],"-composite")==0)	composite=true;
-  else if(i==1)								filename=argv[i];
+  else if(strcmp(argv[i],"-tm")==0)							isTileMap=true;
+  else if(strcmp(argv[i],"-full")==0)						full_size=true;
+  else if(strcmp(argv[i],"-row_half_interleaving")==0)		full_size=true;
+  else if(strcmp(argv[i],"-ref")==0)						ref=true;
+  else if(strcmp(argv[i],"-plan_rev")==0)					plan_rev=true;
+  else if(strcmp(argv[i],"-composite")==0)					composite=true;
+  else if(i==1)												filename=argv[i];
   else
   {
    printf("Unknown argument: %s\n",argv[i]);
@@ -253,7 +255,7 @@ int get_tile_el_value(short x,short y)
   if(targetFormat==TARGET_NEOGEO_SPR)
   {
    if(composite)								return bytStr[tile_x*128+(y/8)*64+(ref?x/4:1-x/4)*32+(plan_rev?3-(x%4):(x%4))+(y%8)*4];
-   else if(full_size)							return bytStr[tile_x*128+y*8+(x%4)*2+(ref?x/4:1-x/4)];
+   else if(full_size)							return bytStr[tile_x*128+y*8+((x%4)<<(1-interleave))+((ref?x/4:1-x/4)<<(interleave*2))];
    else											return bytStr[tile_x*128+y*4+(ref?x/4:1-x/4)*64+(x%4)];
   }
   else											return bytStr[(tile_x/4)*128+(ref?1-(tile_x%2):tile_x%2)*64+((tile_x%4)/2)*32+(plan_rev?3-(x%4):(x%4))+y*4];
@@ -445,7 +447,7 @@ int main(int argc,char *argv[])
  if(ref==true&&!(sourceFormat==FORMAT_PLANAR4_16x16||sourceFormat==FORMAT_TAITO_Z||targetFormat==TARGET_TC0180VCU))				error("Neither target nor source format use a horizontal or vertical reflection.");
 
  if((targetFormat==TARGET_MODEL3_8&&!(sourceFormat<=FORMAT_ROHGA_DECR||sourceFormat==FORMAT_PCE_CG||(sourceFormat==FORMAT_PLANAR4_16x16&&full_size==false)||sourceFormat==FORMAT_OLD_SPRITE||sourceFormat==FORMAT_TAITO_Z||sourceFormat==FORMAT_UNDERFIRE||sourceFormat==FORMAT_HALF_DEPTH))
-	 ||(targetFormat==TARGET_NEOGEO_SPR&&!(sourceFormat==FORMAT_PLANAR4_16x16||sourceFormat==FORMAT_NEO_MIRROR||sourceFormat==FORMAT_TAITO_Z))
+	 ||(targetFormat==TARGET_NEOGEO_SPR&&!(sourceFormat==FORMAT_PLANAR4_16x16||sourceFormat==FORMAT_TAITO_Z))
 	 ||!(targetFormat==TARGET_NEOGEO_SPR||targetFormat==TARGET_MODEL3_8)&&sourceFormat>=FORMAT_ROHGA_DECR)						error("This source and target formats combination doesn't supported!");
 
  if(isTileMap&&(targetFormat==TARGET_OLD_SPRITE||targetFormat==TARGET_NEOGEO_SPR))												error("Chosen target format is a sprites, not a tilemaps.");
@@ -453,12 +455,13 @@ int main(int argc,char *argv[])
 
  if(composite)
  {
-  if(sourceFormat!=FORMAT_PLANAR4_16x16)	error("Chosen source format has a monomorphic tile structure.");
-  if(sourceFormat!=TARGET_NEOGEO_SPR)		error("Source tile grouping has a sense only with 16x16 target formats.");
-  if(full_size)								error("Source format's features are mutually exclusive!");
+  if(sourceFormat!=FORMAT_PLANAR4_16x16)																						error("Chosen source format has a monomorphic tile structure.");
+  if(sourceFormat!=TARGET_NEOGEO_SPR)																							error("Source tile grouping has a sense only with 16x16 target formats.");
  }
 
- if(plan_rev&&!composite)					error("Even if such formats exists, their support as a source is not added for a while.");
+ if((full_size&&composite)||(!full_size&&interleave))																			error("Source format's features are mutually exclusive!");
+
+ if(plan_rev&&!composite)																										error("Even if such formats exists, their support as a source is not added for a while.");
 
  short depth;
 
