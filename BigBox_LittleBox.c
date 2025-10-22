@@ -60,7 +60,7 @@ const struct FormatInfo source_formats[] = {
     {"rohga_decr", "decrypted 4bpp planar 8x8 tiles for Armored Force Rohga"},
     {"pce_cg", "4bpp planar 8x8 tiles for NEC/Hudson Soft PC Engine/TurboGraphX-16 basic video"},
     //{"linear4_16x16", "Generic 4bpp linear 16x16 tiles. Among the noticeable usage cases is a tiles for Konami K053246 custom sprite chip."},
-    {"planar4_16x16", "Generic 4bpp planar 16x16 tiles. Among the noticeable usage cases is a sprites for Irem M92 and tiles for Taito TC0180VCU and Toaplan GP9001 custom video chips. Some later M92 games (e. g. [Superior/Perfect] Soldiers) stores the sprite data by 16px-wide rows instead of 8px-wide like other - in this case you can use the -full arg."},
+    {"planar4_16x16", "Generic 4bpp planar 16x16 tiles. Among the noticeable usage cases is a sprites for Irem M92 and tiles for Gaelco Type 1 arcade system, TH Strikes Back hardware and Taito TC0180VCU and Toaplan GP9001 custom video chips. Some later M92 games (e. g. [Superior/Perfect] Soldiers) stores the sprite data by 16px-wide rows instead of 8px-wide like other - in this case you can use the -full arg."},
     {"neo_mirror", "The closest to Neo-Geo sprites graphic format, excepting only reverse order of pixels inside each 8px-wide row. The most noticeable usage case is a sprites for some of Data East 16-bit arcades (for example, Crude Buster/Two Crude) and their various korean hardware clones."},
     {"old_sprite", "See the target formats list. Please note that in the source role its size is always gets used fully."},
     {"taito_z", "4bpp planar 16x8 sprite tiles for Taito System Z games (except Chase HQ). Some of them (e.g., Battle Shark and Space Gun) use a pre-mirrored tiles (see the -ref arg)."},
