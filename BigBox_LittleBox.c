@@ -257,6 +257,7 @@ int get_tile_el_value(short x,short y)
   {
    if(composite)								return bytStr[tile_x*128+(y/8)*64+(1-x/4)*32+(plan_rev?3-(x%4):(x%4))+(y%8)*4];
    else if(full_size)							return bytStr[tile_x*128+y*8+(x%4)*2+(1-x/4)];
+   else											return bytStr[tile_x*128+y*4+(x/4)*64+(x%4)];
   }
   else											return bytStr[(tile_x/4)*128+(tile_x%2)*64+((tile_x%4)/2)*32+(plan_rev?3-(x%4):(x%4))+y*4];
  }
